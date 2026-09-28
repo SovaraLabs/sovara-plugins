@@ -1,0 +1,150 @@
+{
+  "skill_name": "sovara",
+  "notes": "Trigger evals for the sovara skill description. Each query is labeled with whether the skill should activate. Should-trigger queries mix explicit mentions of Sovara with indirect phrasings the description must also catch. Should-not-trigger queries are near-misses that share keywords (agents, traces, Azure) but are about something else.",
+  "queries": [
+    {
+      "id": "trig-01",
+      "query": "my langchain agent keeps giving wrong answers on the last step — help me figure out which tool call is broken",
+      "should_trigger": true,
+      "rationale": "Agent-debugging intent without naming Sovara. Description must catch indirect activation."
+    },
+    {
+      "id": "trig-02",
+      "query": "I want to see every prompt and response my agent script produced during a run",
+      "should_trigger": true,
+      "rationale": "Run-recording intent without naming Sovara."
+    },
+    {
+      "id": "trig-03",
+      "query": "the agent regressed after my last commit — diff its behavior between then and now",
+      "should_trigger": true,
+      "rationale": "Run-comparison intent without naming Sovara."
+    },
+    {
+      "id": "trig-04",
+      "query": "make my agent remember that refunds over $500 always need manager approval",
+      "should_trigger": true,
+      "rationale": "Lesson-injection intent expressed as 'remember this rule' — indirect but central to Sovara."
+    },
+    {
+      "id": "trig-05",
+      "query": "set up observability for my python agent so I can see token usage per call",
+      "should_trigger": true,
+      "rationale": "Observability framing with Python agent context."
+    },
+    {
+      "id": "trig-06",
+      "query": "this OpenAI agent is looping — figure out which step starts the loop",
+      "should_trigger": true,
+      "rationale": "Run-inspection intent for an LLM agent without naming Sovara."
+    },
+    {
+      "id": "trig-07",
+      "query": "I want to capture company-specific knowledge that my LLM agent should consult at runtime",
+      "should_trigger": true,
+      "rationale": "Lesson creation framed as 'capture domain knowledge'."
+    },
+    {
+      "id": "trig-08",
+      "query": "record my agent run with sovara and probe step 3 in detail",
+      "should_trigger": true,
+      "rationale": "Direct mention of Sovara — baseline activation case."
+    },
+    {
+      "id": "trig-09",
+      "query": "set up Sovara in this agent repository and make sure the important tool calls appear in the trace",
+      "should_trigger": true,
+      "rationale": "Repository instrumentation and trace-completeness intent are central setup workflows."
+    },
+    {
+      "id": "trig-10",
+      "query": "install the Sovara CLI and the assistant skill for Claude Code",
+      "should_trigger": true,
+      "rationale": "Direct install ask covering CLI + skill install paths."
+    },
+    {
+      "id": "trig-11",
+      "query": "rewrite my system prompt so the model stops hallucinating dates",
+      "should_trigger": false,
+      "rationale": "Prompt engineering with no run inspection. Should not pull in Sovara."
+    },
+    {
+      "id": "trig-12",
+      "query": "my postgres queries are slow — trace them and find the bottleneck",
+      "should_trigger": false,
+      "rationale": "Tracing keyword but database-tracing, not LLM/agent tracing."
+    },
+    {
+      "id": "trig-13",
+      "query": "I have a flaky pytest test, help me reproduce and fix it",
+      "should_trigger": false,
+      "rationale": "Standard test debugging, no LLM agent involved."
+    },
+    {
+      "id": "trig-14",
+      "query": "deploy my Flask app to Azure Container Apps with HTTPS",
+      "should_trigger": false,
+      "rationale": "Azure Container Apps near-miss unrelated to Sovara."
+    },
+    {
+      "id": "trig-15",
+      "query": "log every HTTP request my service makes to a file for audit",
+      "should_trigger": false,
+      "rationale": "Generic HTTP logging, not LLM-agent observability."
+    },
+    {
+      "id": "trig-16",
+      "query": "install openai's python sdk",
+      "should_trigger": false,
+      "rationale": "Different package install — same install verb, different ecosystem."
+    },
+    {
+      "id": "trig-17",
+      "query": "build an eval harness that scores my langchain pipeline against a labeled dataset",
+      "should_trigger": false,
+      "rationale": "Eval-harness construction is adjacent to Sovara annotations but not what this skill does. Near-miss negative."
+    },
+    {
+      "id": "trig-18",
+      "query": "rename the variables in agent.py to snake_case",
+      "should_trigger": false,
+      "rationale": "Routine refactor on an agent file. Mentions 'agent' but not in any way that needs Sovara."
+    },
+    {
+      "id": "trig-19",
+      "query": "I'm debugging my python script that calls Claude — print the exact prompt being sent",
+      "should_trigger": true,
+      "rationale": "Indirect agent-debugging intent. Could be solved by Sovara recording the run rather than by adding print statements."
+    },
+    {
+      "id": "trig-20",
+      "query": "set up a CI pipeline that fails when my agent's outputs regress against baseline traces",
+      "should_trigger": true,
+      "rationale": "Run-comparison + regression detection — core Sovara use case framed as CI."
+    },
+    {
+      "id": "trig-21",
+      "query": "Help me write a query for our internal database using our revenue definitions.",
+      "should_trigger": true,
+      "rationale": "Company-specific database conventions can be supplied by Sovara without the user explicitly requesting lesson retrieval."
+    },
+    {
+      "id": "trig-22",
+      "query": "Calculate this borrower’s adjusted EBITDA using our investment team’s rules.",
+      "should_trigger": true,
+      "rationale": "An ordinary finance task depends on internal domain knowledge."
+    },
+    {
+      "id": "trig-23",
+      "query": "Turn this explanation of our intake policy into a lesson for our agents.",
+      "should_trigger": true,
+      "rationale": "A lesson can come from a user-supplied policy without a recorded agent run."
+    },
+    {
+      "id": "trig-24",
+      "query": "Explain INNER JOIN versus LEFT JOIN using a fictional example and general SQL knowledge only.",
+      "should_trigger": false,
+      "rationale": "General SQL instruction needs neither internal knowledge nor agent inspection."
+    }
+  ]
+}

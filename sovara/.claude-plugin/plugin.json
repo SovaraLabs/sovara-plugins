@@ -1,0 +1,12 @@
+{
+  "name": "sovara",
+  "version": "0.1.0",
+  "description": "Domain knowledge management and agent observability",
+  "author": {
+    "name": "Sovara Labs Inc.",
+    "url": "https://sovara-labs.com"
+  },
+  "homepage": "https://docs.sovara-labs.com",
+  "mcpServers": "./.mcp.json",
+  "license": "MIT"
+}

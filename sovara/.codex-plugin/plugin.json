@@ -1,0 +1,30 @@
+{
+  "name": "sovara",
+  "version": "0.1.0",
+  "description": "Domain knowledge management and agent observability",
+  "author": {
+    "name": "Sovara Labs Inc.",
+    "url": "https://sovara-labs.com"
+  },
+  "homepage": "https://docs.sovara-labs.com",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Sovara",
+    "shortDescription": "Domain knowledge for AI agents",
+    "longDescription": "Apply your company’s tacit knowledge to everyday tasks, inspect recorded agent runs, and propose lesson improvements for review.",
+    "developerName": "Sovara Labs Inc.",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Write",
+      "Interactive"
+    ],
+    "defaultPrompt": [
+      "Help me write a query for our internal database.",
+      "Calculate this company’s adjusted EBITDA using our investment team’s rules.",
+      "Propose a lesson from this correction so our agents avoid repeating the mistake."
+    ],
+    "composerIcon": "./assets/icon.png"
+  },
+  "license": "MIT"
+}
