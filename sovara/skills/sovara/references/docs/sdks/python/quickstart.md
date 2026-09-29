@@ -73,9 +73,9 @@ def choose_warmer_city(zurich: int, boston: int) -> str:
 
 def main() -> None:
     question = "Which city is warmer, Boston or Zurich?"
-    with sovara_client.run("compare city weather"):  # [!code ++]
+    with sovara_client.run("compare city weather") as run_key:  # [!code ++]
         # Attach the user-visible request to the top-level run.  # [!code ++]
-        sovara_client.log_input(question)  # [!code ++]
+        sovara_client.log(run_key=run_key, run_input=question)  # [!code ++]
 
         # Each subrun groups one delegated agent's work into an expandable child run.  # [!code ++]
         with sovara_client.subrun("Zurich weather agent"):  # [!code ++]
@@ -86,7 +86,7 @@ def main() -> None:
 
         answer = choose_warmer_city(zurich, boston)
         # Attach the final user-visible result to the top-level run.  # [!code ++]
-        sovara_client.log_output(answer)  # [!code ++]
+        sovara_client.log(run_key=run_key, run_output=answer)  # [!code ++]
 
     print(answer)
 
@@ -117,7 +117,7 @@ uv run python weather_agent.py
 Open the `weather-agent` project in Sovara to inspect the run. A run typically
 corresponds to one chat session or one workflow execution.
 
-`log_input()` and `log_output()` populate the Input and Output columns in the
+`log(run_key=..., run_input=..., run_output=...)` populates the Input and Output columns in the
 Runs table, so you can scan results without opening each run:
 
 <img

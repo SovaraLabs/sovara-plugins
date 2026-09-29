@@ -13,6 +13,8 @@ Try:
 
 Tool calls send the requested task context and arguments to your organization’s Sovara deployment. Access is limited by your account and connection permissions. Model-backed features use the deployment’s configured providers. [Privacy policy](https://sovara-labs.com/legal/privacy-policy).
 
+The hosted plugin authenticates with OAuth and does not read local API keys or forward environment variables. The bundled SDK and CLI reference guides include optional credential-configuration examples for a user’s own Sovara deployment; example.com addresses are placeholders.
+
 [Documentation](https://docs.sovara-labs.com/mcp/overview) · [Support](mailto:hello@sovara-labs.com)
 
 MIT licensed; no trademark rights are granted.

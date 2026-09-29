@@ -48,7 +48,7 @@
       "assertions": [
         "Project identity is defined once on `SovaraClient(project_name=...)`.",
         "The top-level context passes a stable application conversation id as `run_key`.",
-        "The answer uses `client.log_input(...)` and `client.log_output(...)` for latest run-level input/output.",
+        "The answer logs latest run-level input/output with `client.log(run_key=..., run_input=..., run_output=...)`.",
         "The retriever or child agent is wrapped with `client.subrun(...)`, not a nested `client.run(...)`.",
         "The answer does not put prompts, user messages, secrets, or large payloads in `run_key`."
       ]
@@ -81,10 +81,10 @@
     {
       "id": 7,
       "prompt": "Add a custom latency metric to this Sovara-instrumented Python run.",
-      "expected_output": "A focused change using `client.log_metrics(latency_ms=...)` with scalar lower-snake-case metric keys and no free-form metadata.",
+      "expected_output": "A focused change using `client.log(run_key=..., latency_ms=...)` with scalar lower-snake-case metric keys and no free-form metadata.",
       "files": [],
       "assertions": [
-        "The answer uses `client.log_metrics(...)`, not a removed module-level helper.",
+        "The answer uses `client.log(run_key=..., ...)`, not the removed `log_metrics(...)`.",
         "The metric key is lower snake case and short, for example `latency_ms`.",
         "The metric value is a scalar bool, int, or finite float.",
         "The answer keeps prompts, responses, lists, dicts, and secrets out of metrics."
@@ -146,14 +146,14 @@
     },
     {
       "id": 12,
-      "prompt": "What do log_input and log_output do in the current Sovara Python SDK, and where should I call them?",
-      "expected_output": "An answer grounded in the bundled Python SDK snapshots that places both calls inside an active client run and explains their current run-level semantics and value constraints.",
+      "prompt": "How do I record a run's input and output with the current Sovara Python SDK, and where should I call it?",
+      "expected_output": "An answer grounded in the bundled Python SDK snapshots that uses `log(run_key=..., run_input=..., run_output=...)` with the key from `client.run(...)` and explains its run-level semantics and value constraints.",
       "files": [],
       "assertions": [
         "The agent reads the bundled Python usage guide and API reference before answering.",
-        "The answer uses `sovara_client.log_input(...)` and `sovara_client.log_output(...)` inside `sovara_client.run(...)`.",
-        "The answer says the calls populate the run's Input and Output columns and replace the previously logged value.",
-        "The answer says both methods require strings and warn without sending data outside an active run.",
+        "The answer uses `sovara_client.log(run_key=run_key, run_input=..., run_output=...)` with the key yielded by `sovara_client.run(...)`.",
+        "The answer says the values populate the run's Input and Output columns and replace the previously logged value.",
+        "The answer says `run_input` and `run_output` must be strings and that `log()` raises instead of silently skipping when it cannot write.",
         "The answer does not recommend removed module-level logging helpers."
       ]
     },

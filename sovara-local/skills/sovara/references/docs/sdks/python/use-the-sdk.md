@@ -39,18 +39,16 @@ For a durable conversation or workflow, pass an application-owned correlation
 ID. Reusing it appends new steps to the same canonical Sovara run.
 
 ```python
-with sovara_client.run("support chat", run_key=chat_id) as run_id:
-    sovara_client.log_input(message)
+with sovara_client.run("support chat", run_key=chat_id) as run_key:
+    sovara_client.log(run_key=run_key, run_input=message)
     reply = agent.reply(message)
-    sovara_client.log_output(reply)
+    sovara_client.log(run_key=run_key, run_output=reply)
 ```
 
 Keep prompts, messages, and secrets out of `run_key`; use a stable ID such
 as a chat, ticket, or job ID.
 
-`client_run_id` remains accepted as a deprecated alias during the compatibility
-period. The value bound by `as run_id` is Sovara's durable canonical UUID.
-The CLI can address this run using either that UUID or the application key:
+The context yields `run_key`, generated if omitted. You can also use it in the CLI:
 
 ```bash
 sovara probe --project-id support-agent --run-key "$CHAT_ID"
@@ -88,18 +86,22 @@ Nested top-level `client.run(...)` calls are ignored with a warning. Use
 
 ## Run metadata
 
-Add the user-visible input/output and small scalar metrics from inside a run.
+Use `log()` to attach input, output, and custom fields to a run.
 
 ```python
-with sovara_client.run("answer-question"):
-    sovara_client.log_input(question)
+with sovara_client.run("answer-question") as run_key:
+    sovara_client.log(run_key=run_key, run_input=question)
     answer = agent(question)
-    sovara_client.log_output(answer)
-    sovara_client.log_metrics(answered=True, latency_budget_ms=2500)
+    sovara_client.log(run_key=run_key, run_output=answer)
+    sovara_client.log(run_key=run_key, answered=True, latency_budget_ms=2500)
 ```
 
-Metric values must be booleans, integers, or finite floats. Keep prompts,
-responses, lists, dictionaries, and secrets out of metrics.
+Custom fields accept booleans, integers, finite floats, or strings. Omit fields
+to leave them unchanged; explicit `None`, lists, and dictionaries are rejected.
+Logging also works after the context exits and always requires an explicit target.
+
+To group sample runs and record verdicts, follow the
+[Evaluations guide](/observability/evaluations).
 
 ## Lessons
 
@@ -181,8 +183,8 @@ Both `run()` and `turn()` support `async with`. A turn block returns its new
 block restores the previous context; it sends no close request and does not
 rotate the recording credential. Empty blocks remain visible as empty turns.
 `turn_input` accepts only `str` or `None`, preserves empty strings, Unicode,
-spaces, and line breaks exactly, and describes this interaction. `log_input()`
-and `log_output()` remain latest-value properties of the whole run.
+spaces, and line breaks exactly, and describes this interaction. Fields written
+with `log(run_key=..., run_input=..., run_output=...)` describe the whole run.
 
 Same-run nested turns and using a different client inside the run are rejected.
 A subrun's invocation step belongs to the parent's turn, while the child starts
