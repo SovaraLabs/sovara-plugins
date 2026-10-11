@@ -21,25 +21,23 @@ The client ensures the exec server is reachable, registers the run, executes
 the callback in an `AsyncLocalStorage` scope, and finalizes the run in
 `finally`.
 
-For a durable conversation or job, pass an application-owned correlation ID.
-Reusing it within the same project appends to the canonical Sovara run.
+For a durable conversation or job, pass your own stable identifier as `runId`,
+or a `sovara-` id. Reuse either value to reach the same run and append to it.
 
 ```ts
 await sovara_client.run(
   "support chat",
   () => agent.reply(message),
-  { runKey: chatId },
+  { runId: chatId },
 );
 ```
 
-Keep prompts and secrets out of `runKey`. `clientRunId` remains accepted as a
-deprecated alias during the compatibility period. `run()` returns the callback
-result. To read Sovara's durable canonical UUID, call
-`sovara_client.getRunId()` inside the callback while the run is active.
-The CLI can address this run using either that UUID or the application key:
+Keep prompts and secrets out of `runId`. `run()` returns the callback result. To
+read the canonical run ID, call `sovara_client.getRunId()` inside the callback
+while the run is active. Pass that ID to the CLI, here as `RUN_ID`:
 
 ```bash
-sovara probe --project-id support-agent --run-key "$CHAT_ID"
+sovara probe "$RUN_ID"
 ```
 
 ## Steps and explicit tracing
@@ -131,17 +129,17 @@ await sovara_client.run("conversation", async () => {
   await sovara_client.turn({ turnInput: "Hi." }, async () => respond());
   await sovara_client.turn({ turnInput: "Another question." }, async () => respond());
   await cleanup();
-}, { runKey: "chat-123" });
+}, { runId: "chat-123" });
 ```
 
-For one recording per interaction, reuse the same project-scoped key and declare
+For one recording per interaction, reuse the same `runId` and declare
 each interaction explicitly:
 
 ```ts
 for (const message of messages) {
   await sovara_client.run("conversation", async () => {
     return await sovara_client.turn({ turnInput: message }, () => respond());
-  }, { runKey: "chat-123" });
+  }, { runId: "chat-123" });
 }
 ```
 
@@ -159,7 +157,7 @@ scope, so a later turn never reassigns them. Await parallel tasks and fully
 consume streams before the outer `run()` callback returns. Concurrent turn
 sections are logical groups, not a total timeline.
 
-These SDKs require `runner-api` 2. Upgrade app-server and exec-server together;
-version-1 servers and servers without compatibility metadata are rejected before
+The CLI and SDKs require `runner-api` 4. Upgrade the CLI, SDKs, app-server and exec-server together;
+servers without version 4 and servers without compatibility metadata are rejected before
 the agent code starts. An unreachable server keeps the no-capture fallback,
 including execution of turn callbacks.

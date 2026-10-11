@@ -33,14 +33,17 @@ await sovara_client.run("agent-task", async () => runAgent());
 
 | Option | Purpose |
 | --- | --- |
-| `runKey` | Project-scoped correlation key. Reusing it opens another recording session in the same durable run; declare turns explicitly. |
-| `clientRunId` | Deprecated compatibility alias for `runKey`. |
+| `runId` | Your own stable identifier or a `sovara-` id. Reusing either value opens another recording session in the same durable run; declare turns explicitly. |
 | `captureLogs` | Captures stdout/stderr unless set to `false`. |
 | `lessonScope` | Folder path, path list, `null` for root/all, or `[]` to disable retrieval. |
 
-`runKey` and `clientRunId` are trimmed and must be non-empty when supplied. If
-both are provided, their normalized values must match. Keys are scoped to the
-selected project.
+`runId` is sent as given; the server derives the canonical id within the
+selected project, and `getRunId()` returns it. A `sovara-` id must already exist
+in that project. `runKey` and `clientRunId` were removed; pass `runId` instead.
+
+A `runId` the server rejects as invalid (blank, longer than 1024 characters, or a
+malformed `sovara-` id) rejects with `SovaraConfigError`. A `sovara-` id that does
+not exist rejects only with `evalRunId`; otherwise the callback runs without recording.
 
 Returns `Promise<T>` for the callback result and rethrows callback errors after
 finalization.
@@ -81,13 +84,13 @@ credential rotation. Callback errors propagate after restoring the context.
 ```ts
 await sovara_client.run("conversation", async () => {
   return await sovara_client.turn({ turnInput: "Hi." }, () => respond());
-}, { runKey: "chat-123" });
+}, { runId: "chat-123" });
 ```
 
 Nested turns in the same run and wrong-client use are errors. Tasks and streams
 retain their originating scope; finish them before the outer run returns.
 `logInput()`/`logOutput()` remain aggregate run properties. Empty turns are
-retained. Requires runner-api 2; see [the usage guide](use-the-sdk#explicit-conversation-turns)
+retained. Requires runner-api 4; see [the usage guide](use-the-sdk#explicit-conversation-turns)
 for continuous and per-interaction recording patterns.
 
 ## `trace(fn, options?)`

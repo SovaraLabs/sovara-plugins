@@ -26,10 +26,10 @@ to understand:
 Current SDKs separate recording lifetime from logical interactions. `run()`
 records work without an implicit turn; declare meaningful conversation sections
 with scoped `client.turn(...)` using the matching Python or TypeScript reference.
-Use the same project-scoped run key for durable conversations. Do not introduce
+Use the same `run_id` for durable conversations. Do not introduce
 manual next-turn transitions or duplicate subagent instrumentation. Finish tasks
-and streams before closing the outer recording. Current SDKs require runner-api 2;
-the CLI's recording adapter remains on 1.
+and streams before closing the outer recording. Current SDKs and CLI require
+runner-api 4.
 
 ## Setup workflow
 
@@ -137,3 +137,6 @@ prepared. Read only the files needed for the current language and task:
 
 For installation and SDK questions, consult these snapshots before answering.
 Do not substitute remembered APIs or hand-written installation instructions.
+
+Upgrade CLI, SDKs and both servers together: runner-api 1–3 are unsupported.
+Desktop updates alone do not update the CLI-bundled exec-server.

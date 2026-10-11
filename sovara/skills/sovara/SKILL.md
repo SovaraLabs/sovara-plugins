@@ -6,7 +6,8 @@ description: >
   depends on internal database conventions, investment rules, operating
   procedures, or other tacit domain knowledge, even without naming Sovara.
   Also covers debugging recorded model/tool calls, proposing lesson changes,
-  and installing or instrumenting Python and TypeScript agents with Sovara.
+  evaluating agents with benchmarks, and installing or instrumenting Python
+  and TypeScript agents with Sovara.
   General questions that need no company context or agent inspection do not
   require this skill.
 ---
@@ -21,14 +22,16 @@ traces as ordered run steps for inspection and improvement.
 Core capabilities:
 
 - **Integrated observability**: Record agent traces as ordered run steps with small, explicit SDK instrumentation at the agent boundary.
-- **Step rerun**: Replay one recorded LLM step with safe input edits after configuring a provider replay key.
+- **Evaluations**: Record benchmark samples and verdicts with the SDK, compare evaluation runs, and inspect failed samples in Sovara.
+- **Step rerun**: Replay one recorded LLM step with safe input edits after configuring a provider replay key. Add `--proposal ID` to test proposed lessons without applying them or changing the source step.
 - **Lessons**: Create, retrieve, validate, and inject reusable Lessons Store entries into agent context.
 - **Project issues**: Read, create, comment on, and close tracked follow-up work.
 - **Installation guidance**: Install the CLI and matching SDK, then connect to the appropriate Sovara environment.
 
 ## Using Sovara through MCP
 
-When Sovara MCP tools are connected, prefer them for supported Sovara operations.
+For local Sovara workspaces, use the CLI. For remote Sovara connections, use the
+connected MCP tools for supported Sovara operations.
 Use their advertised descriptions and schemas for exact arguments; tool prefixes
 depend on the host. CLI and SDK setup below applies when the task involves local
 development, instrumentation, or an operation that needs the CLI.
@@ -71,12 +74,40 @@ For agent development and improvement, read only the file needed for the task:
 If a task spans setup and optimization, follow `repository-setup.md` first,
 then `optimizing-agents.md`. Apply only the sections that match the request.
 
+## Evaluating agents
+
+For benchmark setup, read the bundled [Python SDK API reference](references/docs/sdks/python/api-reference.md)
+for `create_eval_run()`, `run(eval_run_id=...)`, and explicit `log()` targets.
+The user's code executes and grades the benchmark; logging a verdict does not
+invoke a judge. Create a new eval run for each benchmark execution and preserve
+exact, unique input text across evaluations for sample matching.
+
+Use [Evals in Sovara](references/docs/evals/evals-in-sovara.md) to explain
+comparisons and sample inspection, and [Why evals?](references/docs/evals/why-evals.md)
+for benchmark rationale. Dedicated evaluation CLI commands and MCP tools are
+not currently provided; do not invent them. Use the SDK for recording and the
+Evaluations UI for comparisons.
+
 ## On-Demand References
 
 - **[references/cli-reference.md](references/cli-reference.md)**: Load only when exact flags, command shapes, output schemas, or troubleshooting details are needed.
 - **[evals/evals.json](evals/evals.json)**: Output evals — schema-compliant test cases for whether the loaded skill produces good agent behavior.
 - **[evals/trigger_queries.json](evals/trigger_queries.json)**: Trigger evals — realistic prompts (with and without the word "Sovara") used to test whether the description fires correctly. Do not load when answering user requests; this file is for skill maintainers.
 
+## Organization models
+
+Use `sovara org models get` / `catalog` or `get_org_model_settings` /
+`get_org_model_catalog` in MCP; no project is needed. Follow the
+[model guide](references/docs/cli/models.md) for writes and verification, which
+can incur provider charges. Read the organization and revision before changes;
+after an ambiguous write failure, check settings before retrying.
+
 ## Feedback
 
 When a Sovara command should work but does not, propose posting in the Sovara Discord at [discord.gg/P6a93bWJ](https://discord.gg/P6a93bWJ) or emailing `support@sovara-labs.com`. Include the exact command, sanitized output, OS, Sovara CLI version, and whether the configured local, remote, or headless environment was reachable.
+
+## Compatibility
+
+Current CLI and SDKs require runner-api 4. Upgrade them with app-server and
+exec-server; Desktop alone does not supply a new CLI backend. App-api 4 remains
+supported for Desktop 0.10.1, while current Desktop/Web requires app-api 5.

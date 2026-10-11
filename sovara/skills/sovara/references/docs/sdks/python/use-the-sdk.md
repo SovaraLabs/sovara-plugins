@@ -35,23 +35,25 @@ The SDK registers the run with the exec server when the context opens and
 finalizes it when the context exits. The same context works with `with` and
 `async with`.
 
-For a durable conversation or workflow, pass an application-owned correlation
-ID. Reusing it appends new steps to the same canonical Sovara run.
+For a durable conversation or workflow, pass your own stable identifier as
+`run_id`, or a `sovara-` id. The context returns the canonical run ID; reuse
+either value to reach the same run and append new steps to it.
 
 ```python
-with sovara_client.run("support chat", run_key=chat_id) as run_key:
-    sovara_client.log(run_key=run_key, run_input=message)
+with sovara_client.run("support chat", run_id=chat_id) as run_id:
+    sovara_client.log(run_id=run_id, run_input=message)
     reply = agent.reply(message)
-    sovara_client.log(run_key=run_key, run_output=reply)
+    sovara_client.log(run_id=run_id, run_output=reply)
 ```
 
-Keep prompts, messages, and secrets out of `run_key`; use a stable ID such
+Keep prompts, messages, and secrets out of `run_id`; use a stable ID such
 as a chat, ticket, or job ID.
 
-The context yields `run_key`, generated if omitted. You can also use it in the CLI:
+The context yields the canonical run ID, generated if `run_id` is omitted. Pass
+that ID to the CLI, here as `RUN_ID`:
 
 ```bash
-sovara probe --project-id support-agent --run-key "$CHAT_ID"
+sovara probe "$RUN_ID"
 ```
 
 ## Steps and explicit tracing
@@ -89,11 +91,11 @@ Nested top-level `client.run(...)` calls are ignored with a warning. Use
 Use `log()` to attach input, output, and custom fields to a run.
 
 ```python
-with sovara_client.run("answer-question") as run_key:
-    sovara_client.log(run_key=run_key, run_input=question)
+with sovara_client.run("answer-question") as run_id:
+    sovara_client.log(run_id=run_id, run_input=question)
     answer = agent(question)
-    sovara_client.log(run_key=run_key, run_output=answer)
-    sovara_client.log(run_key=run_key, answered=True, latency_budget_ms=2500)
+    sovara_client.log(run_id=run_id, run_output=answer)
+    sovara_client.log(run_id=run_id, answered=True, latency_budget_ms=2500)
 ```
 
 Custom fields accept booleans, integers, finite floats, or strings. Omit fields
@@ -101,7 +103,7 @@ to leave them unchanged; explicit `None`, lists, and dictionaries are rejected.
 Logging also works after the context exits and always requires an explicit target.
 
 To group sample runs and record verdicts, follow the
-[Evaluations guide](/observability/evaluations).
+[Evaluations guide](/evals/evals-in-sovara).
 
 ## Lessons
 
@@ -159,7 +161,7 @@ interactions with scoped `turn()` blocks. Setup, cleanup, and other work outside
 those blocks are still captured, with no turn membership.
 
 ```python
-with sovara_client.run("conversation", run_key="chat-123"):
+with sovara_client.run("conversation", run_id="chat-123"):
     setup()
     with sovara_client.turn(turn_input="Hi."):
         respond()
@@ -168,12 +170,12 @@ with sovara_client.run("conversation", run_key="chat-123"):
     cleanup()
 ```
 
-For one recording per interaction, reuse the same project-scoped key and declare
+For one recording per interaction, reuse the same `run_id` and declare
 the interaction explicitly:
 
 ```python
 for message in messages:
-    with sovara_client.run("conversation", run_key="chat-123"):
+    with sovara_client.run("conversation", run_id="chat-123"):
         with sovara_client.turn(turn_input=message):
             respond()
 ```
@@ -184,7 +186,7 @@ block restores the previous context; it sends no close request and does not
 rotate the recording credential. Empty blocks remain visible as empty turns.
 `turn_input` accepts only `str` or `None`, preserves empty strings, Unicode,
 spaces, and line breaks exactly, and describes this interaction. Fields written
-with `log(run_key=..., run_input=..., run_output=...)` describe the whole run.
+with `log(run_id=..., run_input=..., run_output=...)` describe the whole run.
 
 Same-run nested turns and using a different client inside the run are rejected.
 A subrun's invocation step belongs to the parent's turn, while the child starts
@@ -193,7 +195,7 @@ turn, and `with_context()` propagates it to threads; another block never reassig
 that work. Await all tasks and consume streams before leaving the outer recording.
 Concurrent turn sections are logical groups, not a total timeline.
 
-These SDKs require `runner-api` 2. Upgrade app-server and exec-server together;
-a server offering only version 1 or no compatibility metadata is rejected before
+The CLI and SDKs require `runner-api` 4. Upgrade the CLI, SDKs, app-server and exec-server together;
+a server without version 4 or without compatibility metadata is rejected before
 the agent code starts. An unreachable server retains the existing no-capture
 fallback, including scoped turn blocks.

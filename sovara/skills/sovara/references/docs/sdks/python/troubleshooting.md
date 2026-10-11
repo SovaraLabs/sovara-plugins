@@ -23,16 +23,12 @@ The SDK and the Sovara server it reached implement different versions of the
 that cannot serve it:
 
 ```
-Incompatible runner-api: client supports [1], server supports [2].
-Update the affected component or select a compatible server.
+Your server is outdated. Please update.
 ```
 
-The message names both sides. Update whichever one is behind, or point
-`SOVARA_EXEC_SERVER_URL` at a server that shares a version. Nothing was
-recorded, because the check runs before the run is registered.
-
-An older component that predates compatibility checks is not affected. It sends
-no version metadata, is treated as legacy, and keeps working.
+Update the component named in the message, or point `SOVARA_EXEC_SERVER_URL`
+at an up-to-date server. Compatibility checks stop unsupported requests before
+recording starts.
 
 ## Check the installed SDK
 
@@ -87,8 +83,8 @@ Use visible step refs from `probe`, not internal UUIDs.
 
 ## Turns and recording compatibility
 
-Current Python and TypeScript SDKs require `runner-api` 2. A version-1 server
-or missing metadata causes a compatibility error before the agent callback;
+Current Python and TypeScript SDKs require `runner-api` 4. A server without
+version 4 or missing metadata causes a compatibility error before the agent callback;
 upgrade both app-server and exec-server together. Server unavailability keeps
 the existing no-capture mode.
 

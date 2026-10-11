@@ -197,7 +197,7 @@ elevated privileges, and writes `system/system-log-collection.txt` with
 ### `sovara rerun`
 
 ```text
-usage: sovara rerun (<run-id> | --project-id PROJECT --run-key KEY) --step <step-ref> [--disable-lesson-injection] [--set KEY=VALUE] [--set-file KEY=PATH] [--set-json KEY=JSON]
+usage: sovara rerun (<run-id> | --project-id PROJECT --run-key KEY) --step <step-ref> [--proposal ID | --disable-lesson-injection] [--set KEY=VALUE] [--set-file KEY=PATH] [--set-json KEY=JSON]
 ```
 
 Use this only for recorded LLM call steps. Find the step ref with `probe`, then
@@ -215,11 +215,18 @@ Edit options:
 - `--set-file KEY=PATH`: set a flattened input key to file contents.
 - `--disable-lesson-injection`: remove this step's recorded lesson injection and
   skip fresh retrieval for the rerun.
+- `--proposal ID`: preview the proposal merged into current production without
+  applying it. Preserves the source step and returns a separate `rerun_id` and
+  `lesson_retrieval.lesson_source` provenance. Requires a proposal in the same
+  project, editor access, and a server supporting proposal reruns. Merge
+  conflicts are rejected before replay. Cannot be combined with
+  `--disable-lesson-injection`.
 
 Examples:
 
 ```bash
 sovara rerun <run_id_or_prefix> --step 3
+sovara rerun <run_id_or_prefix> --step 3 --proposal <proposal_id>
 sovara rerun <run_id_or_prefix> --step 3 --disable-lesson-injection
 sovara rerun <run_id_or_prefix> --step 3 --set body.messages.0.content="Use the policy excerpt only."
 sovara rerun <run_id_or_prefix> --step 3 --set-json body.max_tokens=512
@@ -509,8 +516,9 @@ sovara automations delete <automation-id> --project-id Payments
 
 Schedules use five-field cron expressions and IANA timezones. Creation enables the
 schedule unless `--enabled=false` is supplied. Use `--thinking-level` to select a
-supported reasoning level and `--remember-previous-runs` to include earlier outputs
-in execution context. Defaults are `medium` and `false`, respectively.
+supported reasoning level (default `medium`). Every execution starts a fresh
+conversation and reuses that automation’s files. The deprecated
+`--remember-previous-runs` flag is accepted but ignored.
 
 Updates change only explicitly supplied options. Mutations fetch the current
 revision before applying the change; provide `--expected-revision N` to require a
@@ -525,3 +533,10 @@ queued work. `execution` reads the shared result, including output and status.
 Saved automations continue running independently of the CLI or MCP connection.
 Pause or delete them to stop future scheduled work. Scheduled and immediate
 executions consume your organization's model usage.
+
+## Organization model settings
+
+`sovara org models` provides `get`, `catalog`, `discover`, `set --file PATH|-`,
+and `verify TIER|--all`; no project is required. Set and verify can incur provider
+charges. Use `--expected-org-id` and `--expected-revision` to guard writes.
+See [Organization models](docs/cli/models.md) for JSON fields and examples.

@@ -43,24 +43,24 @@
     {
       "id": 4,
       "prompt": "Instrument my Python chat handler so each conversation appends to one Sovara run and the retriever shows as child work.",
-      "expected_output": "Python instrumentation using one `SovaraClient(project_name=...)`, `client.run(..., run_key=chat_id)`, client-owned input/output logging, and `client.subrun(...)` for retriever child work.",
+      "expected_output": "Python instrumentation using one `SovaraClient(project_name=...)`, `client.run(..., run_id=chat_id)`, client-owned input/output logging, and `client.subrun(...)` for retriever child work.",
       "files": [],
       "assertions": [
         "Project identity is defined once on `SovaraClient(project_name=...)`.",
-        "The top-level context passes a stable application conversation id as `run_key`.",
-        "The answer logs latest run-level input/output with `client.log(run_key=..., run_input=..., run_output=...)`.",
+        "The top-level context passes a stable application conversation id as `run_id`.",
+        "The answer logs latest run-level input/output with `client.log(run_id=..., run_input=..., run_output=...)`.",
         "The retriever or child agent is wrapped with `client.subrun(...)`, not a nested `client.run(...)`.",
-        "The answer does not put prompts, user messages, secrets, or large payloads in `run_key`."
+        "The answer does not put prompts, user messages, secrets, or large payloads in `run_id`."
       ]
     },
     {
       "id": 5,
       "prompt": "Instrument my TypeScript chat agent with Sovara. The app has a durable chatId and a nested writer step.",
-      "expected_output": "TypeScript instrumentation using one `new SovaraClient({ projectName })`, `sovara_client.run(..., { runKey: chatId })`, client-owned input/output logging, and `sovara_client.subrun(...)`.",
+      "expected_output": "TypeScript instrumentation using one `new SovaraClient({ projectName })`, `sovara_client.run(..., { runId: chatId })`, client-owned input/output logging, and `sovara_client.subrun(...)`.",
       "files": [],
       "assertions": [
         "Project identity is defined once on `new SovaraClient({ projectName: ... })`.",
-        "The top-level run passes `runKey: chatId` in the run options.",
+        "The top-level run passes `runId: chatId` in the run options.",
         "The nested writer work uses `sovara_client.subrun(...)`, not nested `sovara_client.run(...)`.",
         "The answer uses `sovara_client.logInput(...)` and `sovara_client.logOutput(...)`.",
         "The answer does not use or recommend a removed `log(...)` metrics alias."
@@ -81,10 +81,10 @@
     {
       "id": 7,
       "prompt": "Add a custom latency metric to this Sovara-instrumented Python run.",
-      "expected_output": "A focused change using `client.log(run_key=..., latency_ms=...)` with scalar lower-snake-case metric keys and no free-form metadata.",
+      "expected_output": "A focused change using `client.log(run_id=..., latency_ms=...)` with scalar lower-snake-case metric keys and no free-form metadata.",
       "files": [],
       "assertions": [
-        "The answer uses `client.log(run_key=..., ...)`, not the removed `log_metrics(...)`.",
+        "The answer uses `client.log(run_id=..., ...)`, not the removed `log_metrics(...)`.",
         "The metric key is lower snake case and short, for example `latency_ms`.",
         "The metric value is a scalar bool, int, or finite float.",
         "The answer keeps prompts, responses, lists, dicts, and secrets out of metrics."
@@ -147,11 +147,11 @@
     {
       "id": 12,
       "prompt": "How do I record a run's input and output with the current Sovara Python SDK, and where should I call it?",
-      "expected_output": "An answer grounded in the bundled Python SDK snapshots that uses `log(run_key=..., run_input=..., run_output=...)` with the key from `client.run(...)` and explains its run-level semantics and value constraints.",
+      "expected_output": "An answer grounded in the bundled Python SDK snapshots that uses `log(run_id=..., run_input=..., run_output=...)` with the id from `client.run(...)` and explains its run-level semantics and value constraints.",
       "files": [],
       "assertions": [
         "The agent reads the bundled Python usage guide and API reference before answering.",
-        "The answer uses `sovara_client.log(run_key=run_key, run_input=..., run_output=...)` with the key yielded by `sovara_client.run(...)`.",
+        "The answer uses `sovara_client.log(run_id=run_id, run_input=..., run_output=...)` with the id yielded by `sovara_client.run(...)`.",
         "The answer says the values populate the run's Input and Output columns and replace the previously logged value.",
         "The answer says `run_input` and `run_output` must be strings and that `log()` raises instead of silently skipping when it cannot write.",
         "The answer does not recommend removed module-level logging helpers."

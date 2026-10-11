@@ -47,7 +47,7 @@ client = SovaraClient(
 The custom client is optional. Without it, Sovara creates and manages its
 normal internal HTTP client.
 
-## `client.run(name=None, *, run_key=None, client_run_id=None, eval_run_id=None, capture_logs=True, lesson_scope=<inherit>)`
+## `client.run(name=None, *, run_id=None, eval_run_id=None, capture_logs=True, lesson_scope=<inherit>)`
 
 Opens a recording session on a durable run, usable with `with` or `async with`.
 No turn is created implicitly; work outside `turn()` remains recorded without a turn.
@@ -56,25 +56,29 @@ No turn is created implicitly; work outside `turn()` remains recorded without a 
 with client.run("sync-agent"):
     ...
 
-async with client.run("async-agent", run_key=chat_id):
+async with client.run("async-agent", run_id=chat_id):
     ...
 ```
 
 | Argument | Purpose |
 | --- | --- |
 | `name` | Optional display name. Sovara generates one when omitted. |
-| `run_key` | Optional project-scoped correlation key. Reusing it opens another recording session in the same durable run; declare turns explicitly. |
-| `client_run_id` | Deprecated compatibility alias for `run_key`. |
+| `run_id` | Optional. Pass your own stable identifier or a `sovara-` id. Reusing either value opens another recording session in the same durable run; declare turns explicitly. |
 | `eval_run_id` | Optional eval run that owns this run. Set it when the run starts; subruns inherit it and it cannot change later. |
 | `capture_logs` | Captures `stdout` and `stderr` by default. Disable for concurrent top-level runs. |
 | `lesson_scope` | Folder path or list for this run. Omit to inherit; `None` selects root/all; `[]` disables retrieval. |
 
-`run_key` and `client_run_id` are trimmed and must be non-empty when supplied.
-If both are provided, their normalized values must match. Keys are scoped to
-the selected project.
+`run_id` is sent as given; the server derives the canonical id within the selected
+project. A `sovara-` id must already exist in that project. `run_key` and
+`client_run_id` were removed; pass `run_id` instead.
 
-Returns `SovaraRunContext`. Entering it yields `run_key`, generated if omitted,
-or `None` if recording is unavailable.
+A `run_id` the server rejects as invalid (blank, longer than 1024 characters, or a
+malformed `sovara-` id) raises `SovaraConfigError`. A `sovara-` id that does not exist
+raises it only with `eval_run_id`; otherwise the run continues without recording.
+
+Returns `SovaraRunContext`. Entering it yields the canonical run ID, generated if
+`run_id` is omitted, or `None` if recording is unavailable. Reuse either value to
+reach the same run.
 
 ## `client.subrun(name, *, lesson_scope=<inherit>)`
 
@@ -86,7 +90,7 @@ with client.run("batch"):
         run_one_sample()
 ```
 
-`name` is required. Returns `SovaraRunContext`; entering it yields the subrun's `run_key`.
+`name` is required. Returns `SovaraRunContext`; entering it yields the subrun's run ID.
 
 ## `client.turn(*, turn_input=None)`
 
@@ -97,7 +101,7 @@ text exactly. Exiting restores the parent context without closing or rotating
 the recording. Nested turns in the same run and wrong-client use are errors.
 
 ```python
-with client.run("conversation", run_key="chat-123"):
+with client.run("conversation", run_id="chat-123"):
     with client.turn(turn_input="Hi.") as turn_id:
         reply = respond()
 ```
@@ -105,7 +109,7 @@ with client.run("conversation", run_key="chat-123"):
 Calls and tasks retain the turn captured when they start. Finish parallel work
 and consume streams before leaving the outer run. Logged `run_input`/`run_output`
 remain aggregate run properties. Empty turns are retained. Scoped turns require
-runner-api 2 or newer; this Python SDK requires runner-api 3;
+runner-api 4;
 see [the usage guide](use-the-sdk#explicit-conversation-turns) for both patterns.
 
 ## `trace(fn=None, *, name=None, meta=None)`
@@ -154,22 +158,22 @@ runs and stores aggregate results. This method creates the record; your code
 executes the evaluation, recording each sample with `client.run(eval_run_id=...)`,
 and logs its results.
 
-## `client.log(*, run_key=..., eval_run_id=..., **fields)`
+## `client.log(*, run_id=..., eval_run_id=..., **fields)`
 
 Logs to an explicit target, including after the recording context closes.
 No identifier is inherited from a context. Agent runs and eval runs must already exist.
 
 | Supplied targets | Meaning |
 | --- | --- |
-| `run_key` | Update that run or subrun. |
+| `run_id` | Update that run or subrun: the canonical ID or your own identifier. |
 | `eval_run_id` | Update custom fields on that eval run. |
 | Both | Check that the eval run owns the run, then update the run's fields. |
 | Neither | Validation error. |
 
 Reserved run fields `run_input`, `run_output`, `groundtruth`, and
 `llm_judge_output` accept strings. `llm_judge_is_correct` accepts a boolean.
-All require `run_key`. `run_id` is forbidden; the provisional `eval_id` name is
-also rejected (use `eval_run_id`). Other fields accept strictly
+All require `run_id`. `run_key` and `client_run_id` were removed; the provisional
+`eval_id` name is also rejected (use `eval_run_id`). Other fields accept strictly
 `bool`, `int`, finite `float`, or `str`. Explicit `None` is invalid.
 Integers are stored as numbers, so they must be between -2**53 and 2**53;
 larger values are rejected. Log very large identifiers as strings.
@@ -189,12 +193,12 @@ the app. Log it while the run is active so the run's analysis uses it.
 
 ```python
 eval_run_id = client.create_eval_run()
-with client.run(eval_run_id=eval_run_id) as run_key:
-    client.log(run_key=run_key, run_input=question, groundtruth=expected_answer)
+with client.run(eval_run_id=eval_run_id) as run_id:
+    client.log(run_id=run_id, run_input=question, groundtruth=expected_answer)
     answer = agent(question)
 
 client.log(
-    run_key=run_key,
+    run_id=run_id,
     eval_run_id=eval_run_id,
     run_output=answer,
     llm_judge_output="The answer matches the expected value.",
@@ -207,7 +211,7 @@ client.log(eval_run_id=eval_run_id, accuracy=1.0, sample_count=1)
 `log()` and `create_eval_run()` are synchronous and propagate errors. Unlike the
 recording context's no-capture fallback, explicit logging fails when the server
 is unavailable. If context entry yields `None`, skip run logging or handle the
-unavailable recording; `log(run_key=None, ...)` is invalid.
+unavailable recording; `log(run_id=None, ...)` is invalid.
 
 Successful logging acknowledges a database commit. Writes are ordered with
 other accepted writes to the same run within one exec-server process. A server
@@ -217,7 +221,7 @@ that could not connect was never sent, so the SDK re-checks the exec server
 (restarting a local one that stopped while idle) and sends it once more.
 
 `log_input()`, `log_output()`, and `log_metrics()` were removed. Pass the same values
-to `log(run_key=..., run_input=..., run_output=..., **metrics)` instead.
+to `log(run_id=..., run_input=..., run_output=..., **metrics)` instead.
 
 ## `client.get_run_id()`
 

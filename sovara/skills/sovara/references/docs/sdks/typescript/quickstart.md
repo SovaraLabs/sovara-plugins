@@ -143,7 +143,7 @@ the final `Choose Warmer City` step:
 
 ## Next steps
 
-- [Use the SDK](/sdks/typescript/use-the-sdk) for subruns, durable runs and run keys, lessons, and metadata.
+- [Use the SDK](/sdks/typescript/use-the-sdk) for subruns, durable runs and run IDs, lessons, and metadata.
 - [API reference](/sdks/typescript/api-reference) for the exact public surface.
 - [Troubleshooting](/sdks/typescript/troubleshooting) for missing runs or steps.
 
@@ -159,9 +159,9 @@ await sovara_client.run("conversation", async () => {
   await sovara_client.turn({ turnInput: "Hi." }, async () => respond());
   await sovara_client.turn({ turnInput: "Another question." }, async () => respond());
   await cleanup();
-}, { runKey: "chat-123" });
+}, { runId: "chat-123" });
 ```
 
-These SDKs require `runner-api` 2. Upgrade app-server and exec-server together.
+The CLI and SDKs require `runner-api` 4. Upgrade the CLI, SDKs, app-server and exec-server together.
 See [Using the SDK](/sdks/typescript/use-the-sdk#explicit-conversation-turns)
-for separate recordings with the same run key, empty turns, subruns, and concurrent work.
+for separate recordings with the same `runId`, empty turns, subruns, and concurrent work.

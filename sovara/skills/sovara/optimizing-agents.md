@@ -152,6 +152,7 @@ Then rerun the LLM step:
 
 ```bash
 sovara rerun <run_id_or_prefix> --step <step_ref>
+sovara rerun <run_id_or_prefix> --step <step_ref> --proposal <proposal_id>
 sovara rerun <run_id_or_prefix> --step <step_ref> --disable-lesson-injection
 sovara rerun <run_id_or_prefix> --step <step_ref> --set-json body.max_tokens=512
 sovara rerun <run_id_or_prefix> --step <step_ref> --set-file body.system.0.text=prompt_variant.txt
@@ -164,6 +165,15 @@ Reruns perform current lesson retrieval by default. Use
 `--disable-lesson-injection` for the comparison run without retrieving or
 injecting lessons at the selected step. Read the returned `lesson_retrieval` snapshot
 instead of inferring retrieval behavior from the replayed prompt.
+Use `--proposal ID` to test the proposal merged into current production without
+applying it. This includes proposed lesson and retrieval configuration changes;
+merge conflicts are rejected before replay. Each successful preview preserves
+the source step and returns a separate `rerun_id` plus
+`lesson_retrieval.lesson_source` with the proposal, revisions, and corpus hash.
+The proposal must belong to the run's project. Editor access and a server with
+proposal rerun support are required. Do not combine it with
+`--disable-lesson-injection`. Through MCP, call `rerun` with
+`body: {"step_ref": "3", "proposal_id": "<proposal_id>"}` and the run ID.
 If the command says the step is not replayable, inspect it with `probe` and run
 the full agent instead.
 
