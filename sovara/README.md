@@ -4,7 +4,7 @@ Bring your company's knowledge into Claude Code and inspect its model and tool c
 
 ## Install
 
-Use Claude Code 2.1.310 or later and Node.js 24.22.1 or later on macOS or Linux. Node must be available as `node` in the shell that starts Claude.
+Use Claude Code 2.1.310 or later and Node.js 24.22.1 or later on macOS or Linux. Node must be available as `node` in the shell that starts Claude, and managed settings must permit plugin hooks.
 
 ```sh
 claude plugin marketplace add SovaraLabs/sovara-plugins
@@ -42,7 +42,6 @@ Unset `SOVARA_PROJECT_NAME` to disable automatic lessons and tracing. The skill 
 - Capture contains the conversation and results exposed by Claude. Private provider requests, internal retries, and compaction model calls are not captured. Exact request replay is unavailable.
 - Automatic lessons cover prompts, completed tool batches, local child startup, supported child messages, and committed compaction. Internal model requests may not expose a delivery hook.
 - Agents in another process or remote runtime need their own integration. A forced process kill or lost connection can leave incomplete observations or an unfinished recording.
-- Windows is not supported by the local Unix-socket helper. Managed settings must permit the plugin's hooks.
 
 ## Privacy
 

@@ -23,7 +23,9 @@ if (!["http:", "https:"].includes(parsedUrl.protocol) || parsedUrl.username || p
 const url = parsedUrl.href.replace(/\/+$/, "");
 const binding = JSON.stringify([url, config.projectName.trim(), config.sessionId]);
 const state = await openState(process.env.SOVARA_CLAUDE_STATE_DIR || join(homedir(), ".sovara", "integrations", "claude-code"), binding);
-const client = new SovaraClient({ projectName: config.projectName, url,
+const explicitlyConfigured = ["SOVARA_URL", "SOVARA_EXEC_SERVER_URL", "SOVARA_EXEC_SERVER_PORT"]
+  .some((name) => process.env[name] !== undefined);
+const client = new SovaraClient({ projectName: config.projectName, ...(explicitlyConfigured ? { url } : {}),
   autoInstrumentation: { providerHttp: false, mcp: false }, drainTimeoutMs: 4000 });
 const session = new ClaudeSession({ client, state });
 const bridge = await startBridge(session);
