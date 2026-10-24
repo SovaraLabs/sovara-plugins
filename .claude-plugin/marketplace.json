@@ -1,0 +1,12 @@
+{
+  "name": "sovara-labs",
+  "description": "Company knowledge and agent observability integrations from Sovara Labs.",
+  "owner": { "name": "Sovara Labs Inc." },
+  "plugins": [
+    {
+      "name": "sovara",
+      "source": "./sovara",
+      "description": "Company knowledge and agent observability with Sovara."
+    }
+  ]
+}
