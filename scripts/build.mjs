@@ -18,7 +18,7 @@ execFileSync("npm", ["run", "build"], { cwd: sdkRoot, stdio: "inherit" });
 await mkdir("sovara/runtime", { recursive: true });
 const result = await build({ entryPoints: ["src/claude/entry.mjs"], outfile: "sovara/runtime/claude-helper.mjs",
   bundle: true, platform: "node", format: "esm", target: "node24.22.1", sourcemap: false,
-  minifyWhitespace: true, legalComments: "none",
+  minify: true, keepNames: true, legalComments: "none",
   alias: { "@sovara/sdk": join(sdkRoot, "dist/index.js") }, packages: "bundle",
   external: ["@openai/agents", "@smithy/node-http-handler"], metafile: true,
 });
