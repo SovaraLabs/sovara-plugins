@@ -20,6 +20,10 @@
     "path": "^/chat/completions$"
   },
   {
+    "url": "^(?:https?://)?api\\.z\\.ai/api/(?:coding/)?paas/v4/chat/completions(?:\\?[^#]*)?(?:#.*)?$",
+    "path": "^/api/(?:coding/)?paas/v4/chat/completions(?:\\?[^#]*)?$"
+  },
+  {
     "url": ".*",
     "path": "/language-model-service/api/llm/v3/completion/[^/?]+(?:/(?:stream|streamCompletionChunk))?$"
   },

@@ -4,7 +4,7 @@ import { resolve, join, dirname } from "node:path";
 import { execFileSync } from "node:child_process";
 
 const source = process.env.SOVARA_SDK_SOURCE;
-if (!source) throw new Error("Build the pinned public SDK, then set SOVARA_SDK_SOURCE to its checkout.");
+if (!source) throw new Error("Build the pinned monorepo SDK, then set SOVARA_SDK_SOURCE to its checkout.");
 const sdkRoot = resolve(source);
 const expected = (await readFile("SDK_REVISION", "utf8")).trim();
 if (!/^[a-f0-9]{40}$/.test(expected)) throw new Error("Invalid pinned SDK revision.");
@@ -48,4 +48,4 @@ for (const [name, directory] of [...packages].sort(([a], [b]) => a.localeCompare
   for (const file of names.sort()) notices += (await readFile(join(directory, file), "utf8")) + "\n";
 }
 await writeFile("sovara/runtime/THIRD_PARTY_NOTICES.txt", notices.trimEnd() + "\n");
-await writeFile("sovara/runtime/SDK_BUILD.json", JSON.stringify({ repository: "https://github.com/SovaraLabs/typescript-sdk", revision: expected, version: manifest.version }, null, 2) + "\n");
+await writeFile("sovara/runtime/SDK_BUILD.json", JSON.stringify({ repository: "https://github.com/SovaraLabs/sovara", directory: "runner_ts", revision: expected, version: manifest.version }, null, 2) + "\n");
