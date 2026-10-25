@@ -150,11 +150,6 @@ export class ClaudeSession {
       const handle = await turn.startModelObservation({
         model: event.model,
         ...(Array.isArray(event.messages) ? { messages: event.messages } : {}),
-        capture: {
-          source: "host_event", completeness: "partial",
-          limitations: ["Host-visible conversation; provider request, hidden instructions and internal retries are unavailable.",
-            "The host reports aggregate usage and substitutes zero for unavailable counters."],
-        },
         metadata: { integration: "claude-code", hostTurnId: event.turnId, hostAgentId: event.agentId ?? null,
           stepIndex: event.index, lessonIds: saved.lessons.confirmed, lessonGeneration: saved.lessons.generation },
       });
