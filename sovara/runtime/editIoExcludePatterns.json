@@ -1,0 +1,322 @@
+[
+  {
+    "pattern": "^_.*"
+  },
+  {
+    "pattern": "^sse(\\.|$)"
+  },
+  {
+    "pattern": "^ndjson(\\.|$)"
+  },
+  {
+    "pattern": "(^|.*\\.)[^.]*encrypted[^.]*($|\\.)",
+    "flags": "i"
+  },
+  {
+    "pattern": "^url$"
+  },
+  {
+    "pattern": "(^|.*\\.)(?:urls)(?:\\.|$)"
+  },
+  {
+    "pattern": "(^|.*\\.)(?:[^.]+_url|[^.]+Url)$"
+  },
+  {
+    "pattern": "^max_tokens$"
+  },
+  {
+    "pattern": "^stream$"
+  },
+  {
+    "pattern": "^temperature$"
+  },
+  {
+    "pattern": "^metadata\\.user_id$"
+  },
+  {
+    "pattern": "^thinking(\\.|$)"
+  },
+  {
+    "pattern": "^context_management(\\.|$)"
+  },
+  {
+    "pattern": "^output_config\\.(?!effort$).+"
+  },
+  {
+    "pattern": "^body\\.metadata\\.user_id$"
+  },
+  {
+    "pattern": "^body\\.thinking(\\.|$)"
+  },
+  {
+    "pattern": "^body\\.context_management(\\.|$)"
+  },
+  {
+    "pattern": "^body\\.output_config\\.(?!effort$).+"
+  },
+  {
+    "pattern": "^body\\.attribution(\\.|$)"
+  },
+  {
+    "pattern": "^body\\.(?:requestPriority|bypassCaching|traceContext|sessionId)$"
+  },
+  {
+    "pattern": "^body\\.request\\.type$"
+  },
+  {
+    "pattern": "^body\\.request\\.gptChat\\.(?:reasoningEffort|temperature|top_p|n|stop|max_tokens|presence_penalty|frequency_penalty|logit_bias|seed|response_format|tool_choice)$"
+  },
+  {
+    "pattern": "^body\\.request\\.generic\\.(?!prompt$).+"
+  },
+  {
+    "pattern": "^body\\.stream$"
+  },
+  {
+    "pattern": "^body\\.contents\\.\\d+\\.parts\\.\\d+\\.thoughtSignature$"
+  },
+  {
+    "pattern": "^body\\.messages\\.\\d+\\.content\\.\\d+\\.signature$"
+  },
+  {
+    "pattern": "^body\\.inferenceConfig\\.(maxTokens|temperature)$"
+  },
+  {
+    "pattern": "^content\\.id$"
+  },
+  {
+    "pattern": "^content\\.type$"
+  },
+  {
+    "pattern": "^content\\.object$"
+  },
+  {
+    "pattern": "^content\\.created(_at)?$"
+  },
+  {
+    "pattern": "^content\\.completed_at$"
+  },
+  {
+    "pattern": "^content\\.model$"
+  },
+  {
+    "pattern": "^content\\.modelVersion$"
+  },
+  {
+    "pattern": "^content\\.status$"
+  },
+  {
+    "pattern": "^content\\.background$"
+  },
+  {
+    "pattern": "^content\\.context(\\.|$)"
+  },
+  {
+    "pattern": "^content\\.error$"
+  },
+  {
+    "pattern": "^content\\.instructions$"
+  },
+  {
+    "pattern": "^content\\.metadata"
+  },
+  {
+    "pattern": "^content\\.moderation$"
+  },
+  {
+    "pattern": "^content\\.request_id$"
+  },
+  {
+    "pattern": "^content\\.usage"
+  },
+  {
+    "pattern": "^content\\.service_tier$"
+  },
+  {
+    "pattern": "^content\\.system_fingerprint$"
+  },
+  {
+    "pattern": "^content\\.stop_sequence$"
+  },
+  {
+    "pattern": "^content\\.billing"
+  },
+  {
+    "pattern": "^content\\.max_output_tokens$"
+  },
+  {
+    "pattern": "^content\\.max_tool_calls$"
+  },
+  {
+    "pattern": "^content\\.createTime$"
+  },
+  {
+    "pattern": "^content\\.frequency_penalty$"
+  },
+  {
+    "pattern": "^content\\.incomplete_details(\\.|$)"
+  },
+  {
+    "pattern": "^content\\.parallel_tool_calls$"
+  },
+  {
+    "pattern": "^content\\.presence_penalty$"
+  },
+  {
+    "pattern": "^content\\.previous_response_id$"
+  },
+  {
+    "pattern": "^content\\.prompt_cache"
+  },
+  {
+    "pattern": "^content\\.reasoning\\.(effort|summary)$"
+  },
+  {
+    "pattern": "^content\\.safety_identifier$"
+  },
+  {
+    "pattern": "^content\\.signature$"
+  },
+  {
+    "pattern": "^content\\.store$"
+  },
+  {
+    "pattern": "^content\\.temperature$"
+  },
+  {
+    "pattern": "^content\\.text\\.(format\\.type|verbosity)$"
+  },
+  {
+    "pattern": "^content\\.tool_choice$"
+  },
+  {
+    "pattern": "^content\\.tools(\\.|$)"
+  },
+  {
+    "pattern": "^content\\.top_(logprobs|p)$"
+  },
+  {
+    "pattern": "^content\\.truncation$"
+  },
+  {
+    "pattern": "^content\\.user$"
+  },
+  {
+    "pattern": "^content\\.responseId$"
+  },
+  {
+    "pattern": "^content\\.metrics(\\.|$)"
+  },
+  {
+    "pattern": "^content\\.stopReason$"
+  },
+  {
+    "pattern": "^content\\.\\d+\\.signature$"
+  },
+  {
+    "pattern": "^content\\.content\\.\\d+\\.(type|id|signature)$"
+  },
+  {
+    "pattern": "^content\\.content\\.\\d+\\.content\\.\\d+\\.type$"
+  },
+  {
+    "pattern": "^content\\.choices\\.\\d+\\.index$"
+  },
+  {
+    "pattern": "^content\\.choices\\.\\d+\\.finish_reason$"
+  },
+  {
+    "pattern": "^content\\.choices\\.\\d+\\.message\\.(refusal|annotations|reasoning)$"
+  },
+  {
+    "pattern": "^content\\.choices\\.\\d+\\.(logprobs|seed)$"
+  },
+  {
+    "pattern": "^content\\.gptChat\\.(?:id|object|created|model)$"
+  },
+  {
+    "pattern": "^content\\.[^.]+\\.(?:usage|usageMetadata)"
+  },
+  {
+    "pattern": "^content\\.gptChat\\.choices\\.\\d+\\.(?:index|finish_reason)$"
+  },
+  {
+    "pattern": "^content\\.output\\.\\d+\\.(id|type|status)$"
+  },
+  {
+    "pattern": "^content\\.output\\.\\d+\\.content\\.\\d+\\.(type|annotations|logprobs)$"
+  },
+  {
+    "pattern": "^content\\.candidates\\.\\d+\\.avgLogprobs$"
+  },
+  {
+    "pattern": "^content\\.candidates\\.\\d+\\.(finishReason|index)$"
+  },
+  {
+    "pattern": "^content\\.candidates\\.\\d+\\.content\\.parts\\.\\d+\\.thoughtSignature$"
+  },
+  {
+    "pattern": "^content\\.usageMetadata"
+  },
+  {
+    "pattern": "^tools\\.\\d+\\.parameters\\.(additionalProperties|properties|required|type)$"
+  },
+  {
+    "pattern": "^tools\\.\\d+\\.strict$"
+  },
+  {
+    "pattern": "^content\\.done$"
+  },
+  {
+    "pattern": "^content\\.done_reason$"
+  },
+  {
+    "pattern": "^content\\.eval_count$"
+  },
+  {
+    "pattern": "^content\\.eval_duration$"
+  },
+  {
+    "pattern": "^content\\.load_duration$"
+  },
+  {
+    "pattern": "^content\\.prompt_eval_count$"
+  },
+  {
+    "pattern": "^content\\.prompt_eval_duration$"
+  },
+  {
+    "pattern": "^content\\.total_duration$"
+  },
+  {
+    "pattern": "^headers(\\.|$)",
+    "flags": "i"
+  },
+  {
+    "pattern": "^client_message(_type)?(\\.|$)"
+  },
+  {
+    "pattern": "^content\\.output_transcription_segments(\\.|$)"
+  },
+  {
+    "pattern": "^protocol$"
+  },
+  {
+    "pattern": "^server_messages(\\.|$)"
+  },
+  {
+    "pattern": "^setup(\\.|$)"
+  },
+  {
+    "pattern": "^uri$"
+  },
+  {
+    "pattern": "^request_headers(\\.|$)"
+  },
+  {
+    "pattern": "^(method|path|pool_(host|port|scheme))$"
+  },
+  {
+    "pattern": "^(reason|reason_phrase|request_url|status|status_code|version|version_string)$"
+  }
+]

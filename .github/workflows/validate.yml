@@ -1,0 +1,37 @@
+name: Validate
+on:
+  pull_request:
+  push:
+    branches: [main, 'codex/**']
+permissions:
+  contents: read
+jobs:
+  validate:
+    name: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.22.1
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - name: Read SDK revision
+        id: sdk
+        run: |
+          revision=$(cat SDK_REVISION)
+          [[ "$revision" =~ ^[a-f0-9]{40}$ ]]
+          echo "revision=$revision" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        with:
+          repository: SovaraLabs/sovara
+          ref: ${{ steps.sdk.outputs.revision }}
+          path: .build/sovara
+      - run: npm ci --ignore-scripts
+        working-directory: .build/sovara/runner_ts
+      - run: npm run build
+        env:
+          SOVARA_SDK_SOURCE: .build/sovara/runner_ts
+      - run: git diff --exit-code -- sovara/runtime
+      - run: git diff --check

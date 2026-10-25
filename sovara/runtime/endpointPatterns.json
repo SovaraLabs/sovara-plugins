@@ -1,0 +1,98 @@
+[
+  {
+    "url": ".*",
+    "path": "/v1/messages"
+  },
+  {
+    "url": ".*",
+    "path": "/v1/responses"
+  },
+  {
+    "url": ".*",
+    "path": "/v1/chat/completions"
+  },
+  {
+    "url": ".*",
+    "path": "^/openai/deployments/[^/]+/chat/completions$"
+  },
+  {
+    "url": "(?:^|//)api\\.deepseek\\.com(?:/|$)",
+    "path": "^/chat/completions$"
+  },
+  {
+    "url": "^(?:https?://)?api\\.z\\.ai/api/(?:coding/)?paas/v4/chat/completions(?:\\?[^#]*)?(?:#.*)?$",
+    "path": "^/api/(?:coding/)?paas/v4/chat/completions(?:\\?[^#]*)?$"
+  },
+  {
+    "url": ".*",
+    "path": "/language-model-service/api/llm/v3/completion/[^/?]+(?:/(?:stream|streamCompletionChunk))?$"
+  },
+  {
+    "url": ".*bedrock-runtime\\..*amazonaws\\.com",
+    "path": "/model/[^/]+/(?:converse|converse-stream)"
+  },
+  {
+    "url": ".*bedrock-runtime\\..*amazonaws\\.com",
+    "path": "/model/[^/]+/(?:invoke|invoke-with-response-stream)"
+  },
+  {
+    "url": ".*",
+    "path": "models/[^/]+:generateContent"
+  },
+  {
+    "url": ".*",
+    "path": "models/[^/]+:streamGenerateContent"
+  },
+  {
+    "url": ".*",
+    "path": "/api/chat"
+  },
+  {
+    "url": ".*",
+    "path": "/api/generate"
+  },
+  {
+    "url": ".*",
+    "path": "/api/embed"
+  },
+  {
+    "url": ".*",
+    "path": "/api/embeddings"
+  },
+  {
+    "url": "serper\\.dev",
+    "path": ".*"
+  },
+  {
+    "url": ".*api\\.search\\.brave\\.com",
+    "path": "/res/v1/web/search"
+  },
+  {
+    "url": ".*r\\.jina\\.ai",
+    "path": ".*"
+  },
+  {
+    "url": ".*api\\.brightdata\\.com",
+    "path": "/request"
+  },
+  {
+    "url": ".*api\\.patronus\\.ai",
+    "path": "/v1/evaluate"
+  },
+  {
+    "url": ".*api\\.contextual\\.ai",
+    "path": "/v1/datastores/"
+  },
+  {
+    "url": ".*api\\.contextual\\.ai",
+    "path": "/v1/parse"
+  },
+  {
+    "url": ".*api\\.contextual\\.ai",
+    "path": "/v1/rerank"
+  },
+  {
+    "url": ".*api\\.parallel\\.ai",
+    "path": "/v1beta/search"
+  }
+]
