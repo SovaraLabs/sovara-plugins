@@ -4,7 +4,7 @@ Automatic Claude Code integration is implemented with public mod events and a lo
 
 ## Build and test
 
-Use Node.js 24.22.1 or later. Clone this repository and `https://github.com/SovaraLabs/typescript-sdk` into adjacent directories, then run:
+Use Node.js 24.22.1 or later. Clone this repository and `https://github.com/SovaraLabs/sovara` into adjacent directories, then run:
 
 ```sh
 npm ci
@@ -29,3 +29,9 @@ For an opt-in paid failure-isolation check, run `npm run test:live` with your no
 Host observations are partial captures. Do not label the visible conversation as the native provider request or infer a child's parent from its name. Selection alone must never suppress a lesson: confirm its full delivered block in that conversation. After a committed compaction, start a new generation even if the summary mentions an earlier lesson.
 
 Submit changes through pull requests. Public CI has no provider credentials and runs no paid model calls. Package publication and marketplace releases are separate maintainer actions.
+
+### Core SDK source preview
+
+The core SDK source now lives in the private Sovara monorepo. Preview bootstrap
+commands require Git access to that repository. Public CI and external installs
+need a compatible published SDK release; this PR does not publish one.

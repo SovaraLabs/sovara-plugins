@@ -16,12 +16,12 @@
     "path": "^/openai/deployments/[^/]+/chat/completions$"
   },
   {
-    "url": "^(?:https?://)?api\\.z\\.ai/api/(?:coding/)?paas/v4/chat/completions(?:\\?[^#]*)?(?:#.*)?$",
-    "path": "^/api/(?:coding/)?paas/v4/chat/completions(?:\\?[^#]*)?$"
-  },
-  {
     "url": "(?:^|//)api\\.deepseek\\.com(?:/|$)",
     "path": "^/chat/completions$"
+  },
+  {
+    "url": "^(?:https?://)?api\\.z\\.ai/api/(?:coding/)?paas/v4/chat/completions(?:\\?[^#]*)?(?:#.*)?$",
+    "path": "^/api/(?:coding/)?paas/v4/chat/completions(?:\\?[^#]*)?$"
   },
   {
     "url": ".*",

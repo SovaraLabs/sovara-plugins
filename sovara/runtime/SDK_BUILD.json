@@ -1,5 +1,6 @@
 {
-  "repository": "https://github.com/SovaraLabs/typescript-sdk",
-  "revision": "1847811e607edc09cc97aafe1a8e93686a6eb6c4",
+  "repository": "https://github.com/SovaraLabs/sovara",
+  "directory": "runner_ts",
+  "revision": "43825dedb10758fdaeb859737af924aba62aacd9",
   "version": "0.8.0"
 }

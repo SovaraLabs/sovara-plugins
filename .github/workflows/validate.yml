@@ -17,7 +17,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
-      - name: Read public SDK revision
+      - name: Read SDK revision
         id: sdk
         run: |
           revision=$(cat SDK_REVISION)
@@ -25,13 +25,13 @@ jobs:
           echo "revision=$revision" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v4
         with:
-          repository: SovaraLabs/typescript-sdk
+          repository: SovaraLabs/sovara
           ref: ${{ steps.sdk.outputs.revision }}
-          path: .build/typescript-sdk
+          path: .build/sovara
       - run: npm ci --ignore-scripts
-        working-directory: .build/typescript-sdk
+        working-directory: .build/sovara/runner_ts
       - run: npm run build
         env:
-          SOVARA_SDK_SOURCE: .build/typescript-sdk
+          SOVARA_SDK_SOURCE: .build/sovara/runner_ts
       - run: git diff --exit-code -- sovara/runtime
       - run: git diff --check
