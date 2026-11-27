@@ -4,13 +4,16 @@ description: "Install the Sovara CLI and verify that it can reach Sovara."
 ---
 
 The Sovara CLI is a standalone binary named `sovara`. It is not installed by
-the Python SDK or TypeScript runner.
+the Python SDK or TypeScript SDK.
 
-Installing the CLI does not require the desktop app. `sovara status` checks the
-active app-server connection: keep the desktop app running for **Local**, or add
-and select a remote app-server connection in the desktop app. The CLI has no
-separate app-server setting. SDK runs can also start the local execution server
-when needed.
+After installing, run `sovara login` and follow the
+sign-in prompts. Run `sovara status` to check your connection.
+
+<Note>
+For an enterprise deployment, use `sovara login --url https://sovara.company.com`
+with your organization's Sovara URL. Without `--url`, login uses
+`https://app.sovara-labs.com`.
+</Note>
 
 ## macOS, Linux, and WSL
 
@@ -18,10 +21,11 @@ when needed.
 curl -fsSL https://apps.sovara-labs.com/cli/install.sh | sh
 ```
 
-Open a new terminal after installation, then verify:
+Open a new terminal after installation, then sign in and verify:
 
 ```bash
 sovara --version
+sovara login
 sovara status
 ```
 
@@ -31,7 +35,7 @@ sovara status
 irm https://apps.sovara-labs.com/cli/install.ps1 | iex
 ```
 
-Open a new terminal and run `sovara --version` and `sovara status`.
+Open a new terminal, run `sovara --version`, sign in with `sovara login`, and run `sovara status`.
 
 ## Windows CMD
 
@@ -39,7 +43,7 @@ Open a new terminal and run `sovara --version` and `sovara status`.
 curl -fsSL https://apps.sovara-labs.com/cli/install.cmd -o install.cmd && install.cmd && del install.cmd
 ```
 
-Open a new terminal and run `sovara --version` and `sovara status`.
+Open a new terminal, run `sovara --version`, sign in with `sovara login`, and run `sovara status`.
 
 ## Update the CLI
 
@@ -57,7 +61,7 @@ sovara update
 
 ## Set up an agent repository
 
-After installing the CLI and connecting to a Sovara environment, let a coding
+After installing the CLI and signing in to your Sovara server, let a coding
 assistant add and verify the SDK integration:
 
 ```bash

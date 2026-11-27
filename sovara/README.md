@@ -1,20 +1,25 @@
-# Sovara
+# Sovara cloud plugin
 
-Use your company’s tacit knowledge in everyday tasks. Sovara retrieves relevant lessons, lets you inspect recorded agent runs, and saves proposed knowledge changes for review.
+Connect agents to Sovara knowledge, run inspection, evaluations and lesson
+proposals through the hosted MCP endpoint. Authenticate with the existing
+Sovara account; project permissions and proposal revisions remain enforced.
 
-Sign in with your existing Sovara account, select your organization, and choose which projects the assistant can read or change. Your organization’s Sovara server must be reachable over HTTPS. The hosted endpoint is `https://platform.sovara-labs.com/mcp`.
+The shared endpoint `https://platform.sovara-labs.com/mcp` routes to the server
+registered for your organization after sign-in.
 
-Try:
-- Help me write a query for our internal database.
-- Calculate this company’s adjusted EBITDA using our investment team’s rules.
-- Propose a lesson from this correction so our agents avoid repeating the mistake.
+Use `list_projects` to discover accessible projects. Retrieve relevant lessons,
+inspect recorded traces, and save changes as proposals. Applying a proposal changes
+production and needs the user's authorization. Supported hosts display MCP Apps;
+other hosts receive text and structured results.
 
-## Privacy
+Resource links use the origin and canonical IDs returned by Sovara. Do not guess
+IDs or put tokens in URLs. Machine setup, credentials, recording local processes
+and lifecycle operations remain in the CLI.
 
-Tool calls send the requested task context and arguments to your organization’s Sovara deployment. Access is limited by your account and connection permissions. Model-backed features use the deployment’s configured providers. [Privacy policy](https://sovara-labs.com/legal/privacy-policy).
+[Setup and configuration](https://docs.sovara-labs.com/mcp/configuration) ·
+[Tools](https://docs.sovara-labs.com/mcp/tools)
 
-The hosted plugin authenticates with OAuth and does not read local API keys or forward environment variables. The bundled SDK and CLI reference guides include optional credential-configuration examples for a user’s own Sovara deployment; example.com addresses are placeholders.
+## License
 
-[Documentation](https://docs.sovara-labs.com/mcp/overview) · [Support](mailto:hello@sovara-labs.com)
-
-MIT licensed; no trademark rights are granted.
+This plugin's configuration, docs and branding package is MIT licensed. Sovara's
+servers and CLI retain their own terms; no trademark rights are granted.

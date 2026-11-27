@@ -1,50 +1,56 @@
 ---
 title: "TypeScript SDK quickstart"
-description: "Set up the Sovara TypeScript SDK and record an agent run."
+description: "Set up the Sovara TypeScript SDK and record an agent trace."
 ---
 
 <script src="/assets/sdk-nav.js"></script>
 
-Sovara records supported LLM, MCP, and framework tool calls inside an SDK run.
+Sovara records supported LLM, MCP, and framework tool calls inside an SDK trace.
 Use `trace` for important custom operations that are not already captured.
 
 ## Install
 
-Follow [Installation](/get-started/installation) to use an existing Sovara
-environment or choose a local, remote, or headless setup. Then add the packages
-used by this example:
+Use Node.js 24.22.1 or later (or a newer version if your provider packages require it) and
+[install the CLI](/cli/install), then sign in with `sovara login`. For
+a headless host, see the [API reference](/sdks/typescript/api-reference).
+
+Install the example's dependencies:
 
 ```bash
-npm install @sovara/runner @openai/agents zod
+npm install @sovara/sdk @sovara/openai-agents @openai/agents zod
 npm install --save-dev tsx
 ```
 
-Set `OPENAI_API_KEY` in the environment before running the example.
+Set `OPENAI_API_KEY` in the environment before running the example. The model
+calls use your provider account and incur its normal API charges.
 
 ## A complete example
 
-This example uses two child agents to compare the weather in Zurich and
-Boston. Their model and framework tool calls are recorded automatically;
-`trace` records the custom comparison step.
+Two child agents compare sample temperatures. Sovara records their model and
+tool calls; `trace` adds the comparison step. The weather values are demo data.
 
 ```ts
+import { SovaraClient, autoInstrument, trace } from "@sovara/sdk"; // [!code ++]
+import { instrumentOpenAIAgents } from "@sovara/openai-agents"; // [!code ++]
 import { Agent, run, tool } from "@openai/agents";
-import { SovaraClient, trace } from "@sovara/runner"; // [!code ++]
 import { z } from "zod";
 
+// Record supported model and tool calls; await before creating agents or clients. // [!code ++]
+await autoInstrument(); // [!code ++]
+await instrumentOpenAIAgents(); // [!code ++]
 const sovara_client = new SovaraClient({ projectName: "weather-agent" }); // [!code ++]
 const temperature = z.object({ celsius: z.number() });
 
 const getZurichTemperature = tool({
   name: "get_zurich_temperature",
-  description: "Get the current temperature in Zurich in Celsius.",
+  description: "Return the demo temperature in Zurich in Celsius.",
   parameters: z.object({}),
   execute: async () => 22,
 });
 
 const getBostonTemperature = tool({
   name: "get_boston_temperature",
-  description: "Get the current temperature in Boston in Celsius.",
+  description: "Return the demo temperature in Boston in Celsius.",
   parameters: z.object({}),
   execute: async () => 27,
 });
@@ -76,92 +82,53 @@ const chooseWarmerCity = trace( // [!code ++]
 
 async function main(): Promise<void> {
   const question = "Which city is warmer, Boston or Zurich?";
-  await sovara_client.run("compare city weather", async () => { // [!code ++]
-    // Attach the user-visible request to the top-level run. // [!code ++]
-    await sovara_client.logInput(question); // [!code ++]
+  await sovara_client.trace("compare city weather", async () => { // [!code ++]
+    // Attach the user-visible request to the top-level trace. // [!code ++]
+    const traceId = sovara_client.getTraceId(); // [!code ++]
+    if (traceId) await sovara_client.log({ traceId, traceInput: question }); // [!code ++]
 
-    // Each subrun groups one delegated agent's work into an expandable child run. // [!code ++]
-    const zurich = await sovara_client.subrun("Zurich weather agent", async () => { // [!code ++]
+    // Each subtrace groups one delegated agent's work into an expandable child trace. // [!code ++]
+    const zurich = await sovara_client.subtrace("Zurich weather agent", async () => { // [!code ++]
       const result = await run(zurichAgent, question);
       return result.finalOutput!.celsius;
     }); // [!code ++]
 
-    const boston = await sovara_client.subrun("Boston weather agent", async () => { // [!code ++]
+    const boston = await sovara_client.subtrace("Boston weather agent", async () => { // [!code ++]
       const result = await run(bostonAgent, question);
       return result.finalOutput!.celsius;
     }); // [!code ++]
 
     const answer = await chooseWarmerCity(zurich, boston);
-    // Attach the final user-visible result to the top-level run. // [!code ++]
-    await sovara_client.logOutput(answer); // [!code ++]
+    // Attach the final user-visible result to the top-level trace. // [!code ++]
+    if (traceId) await sovara_client.log({ traceId, traceOutput: answer }); // [!code ++]
     console.log(answer);
   }); // [!code ++]
 }
 
-void main();
+await main();
 ```
 
 <Note>
-  Sovara records OpenAI Agents tools created with `tool()` and MCP calls
-  automatically. Do not wrap those tools in `trace` as well; reserve it for
-  important operations that are not already captured.
+Use `trace` for custom operations; supported framework tools and MCP calls are
+recorded automatically. Use optional subtraces to group child agents.
 </Note>
 
-<Note>
-  Subruns are optional, but provide a useful abstraction for grouping child
-  agents or delegated phases into expandable units.
-</Note>
+## Verify one trace
 
-## Verify one run
-
-Save the example as `weather_agent.ts`, then run it normally:
+Save the example as `weather_agent.mts` (an ES module, so top-level `await` works), then
+run it normally:
 
 ```bash
-npx tsx weather_agent.ts
+npx tsx weather_agent.mts
 ```
 
-Open the `weather-agent` project in Sovara to inspect the run. A run typically
-corresponds to one chat session or one workflow execution.
-
-`logInput()` and `logOutput()` populate the Input and Output columns in the
-Runs table, so you can scan results without opening each run:
-
-<img
-  className="docs-screenshot"
-  src="/assets/screenshots/python-sdk-quickstart-runs.png"
-  alt="Sovara Runs table showing the logged weather comparison input and output"
-/>
-
-Open the run to see both weather-agent subruns, their LLM and tool calls, and
-the final `Choose Warmer City` step:
-
-<img
-  className="docs-screenshot"
-  src="/assets/screenshots/python-sdk-quickstart-trace.png"
-  alt="Sovara trace showing Zurich and Boston weather-agent subruns and the final city comparison"
-/>
+Open the `weather-agent` project and select
+<strong><Icon icon="play" size={14} /> Traces</strong> to inspect the recording.
+Open the trace to see both subtraces, their model and tool calls, and the comparison
+step. Logged input and output also appear in the Traces table.
 
 ## Next steps
 
-- [Use the SDK](/sdks/typescript/use-the-sdk) for subruns, durable runs and run IDs, lessons, and metadata.
+- [Use the SDK](/sdks/typescript/use-the-sdk) for subtraces, durable traces and trace IDs, lessons, and metadata.
 - [API reference](/sdks/typescript/api-reference) for the exact public surface.
-- [Troubleshooting](/sdks/typescript/troubleshooting) for missing runs or steps.
-
-## Explicit conversation turns
-
-`run()` opens a recording session without an implicit turn. `turn(options, fn)`
-declares a scoped interaction and returns the callback result. Work outside turn
-callbacks is still captured, with no turn membership.
-
-```ts
-await sovara_client.run("conversation", async () => {
-  await setup();
-  await sovara_client.turn({ turnInput: "Hi." }, async () => respond());
-  await sovara_client.turn({ turnInput: "Another question." }, async () => respond());
-  await cleanup();
-}, { runId: "chat-123" });
-```
-
-The CLI and SDKs require `runner-api` 4. Upgrade the CLI, SDKs, app-server and exec-server together.
-See [Using the SDK](/sdks/typescript/use-the-sdk#explicit-conversation-turns)
-for separate recordings with the same `runId`, empty turns, subruns, and concurrent work.
+- [Troubleshooting](/sdks/typescript/troubleshooting) for missing traces or steps.

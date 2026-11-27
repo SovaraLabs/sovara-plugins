@@ -11,11 +11,12 @@ samples to understand what changed.
 
 Your code runs the benchmark and grades the answers; Sovara records and displays
 the results. Start with the [SDKs](/sdks/index) to connect your agent. The
-[Python SDK reference](/sdks/python/api-reference#clientcreate_eval_run)
-describes how to create an evaluation run and log sample results.
+[Python](/sdks/python/api-reference#clientcreate_eval_run) and
+[TypeScript](/sdks/typescript/api-reference) SDK references describe how to create an
+evaluation run and log sample results.
 
 Each **evaluation run** groups one execution of your benchmark. Each **sample**
-is an individual agent run with its own input, output, verdict, and trace.
+is an individual agent trace with its own input, output, verdict, and trace.
 Create a new evaluation run each time you execute the benchmark so you can
 compare results over time.
 
@@ -80,9 +81,9 @@ investigate new failures, then check **Fixed** to see where your change helped.
 
 <Note>
   Samples match across evaluations by their exact recorded input text. Keep
-  benchmark inputs consistent between runs. Inputs that are missing or occur
+  benchmark inputs consistent between traces. Inputs that are missing or occur
   more than once within either evaluation are excluded from matching. The four
-  outcome groups include only matches with correctness verdicts in both runs.
+  outcome groups include only matches with correctness verdicts in both traces.
 </Note>
 
 ### Did the agent get faster or slower?
@@ -97,6 +98,13 @@ unchanged results, with a separate legend entry when ungraded matches are
 present. The p95 summary highlights the slower end of the runtime distribution,
 using available runtimes from matched samples in each evaluation.
 
+<Note>
+  Runtime is the recorded time of the sample's trace. To report your own
+  measurement instead, log a numeric `latency_ms` field on the sample; Sovara
+  then uses it, in milliseconds, for the runtime column, filters, sorting, the
+  latency chart and p95. The field also stays visible as a custom column.
+</Note>
+
 ## Inspect a sample and its trace
 
 Open an evaluation row, or click an outcome group in the comparison, to see the
@@ -110,7 +118,7 @@ samples by content, input, output, runtime, or correctness. If you arrived from
 an outcome group, the list is already limited to that group. Use **Reset** in
 the filters to return to all samples.
 
-The **Correct last run?** column refers to the preceding evaluation, which may
+The **Correct last trace?** column refers to the preceding evaluation, which may
 be different from the Run A you selected in the comparison.
 
 Click a sample row to open its trace. Follow the model and tool calls to find

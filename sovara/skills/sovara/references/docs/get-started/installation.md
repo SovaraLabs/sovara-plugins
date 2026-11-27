@@ -1,15 +1,20 @@
 ---
 title: "Installation"
-description: "Install Sovara and prepare your local development environment."
+description: "Install the Sovara CLI, sign in, and add the SDK to your agent."
 ---
 
-Install the Sovara CLI first so you can check whether an existing Sovara
-environment is already available. Then choose a local, remote, or headless
-setup and install the SDK for your agent's language.
+Install the Sovara CLI, sign in to your Sovara server, and install the SDK for
+your agent's language.
+
+<Note>
+View your recorded runs at [app.sovara-labs.com](https://app.sovara-labs.com).
+Open your project and select **Traces** to inspect them. For an enterprise
+deployment, open your organization's Sovara URL instead.
+</Note>
 
 ## Sovara CLI
 
-Sovara's CLI gives you terminal access to run inspection, trace queries, logs,
+Sovara's CLI gives you terminal access to trace inspection, trace queries, logs,
 and shared skill guidance. The Python SDK and TypeScript SDK do not install the
 `sovara` command.
 
@@ -46,143 +51,27 @@ Install the Sovara skill for Codex and Claude Code:
 sovara install-skill --target both
 ```
 
-## Connect to Sovara
+## Sign in
 
-The desktop app starts with its fixed **Local** app-server connection. To add a
-remote app-server connection, open **Settings > App-server connection settings** and
-enter the origin provided by your administrator. New remote deployments must set
-`SOVARA_ORG_ID` to the Sovara organization ID provided for that deployment. Desktop shows the
-organization name next to each connection as soon as the server can resolve it,
-or its organization ID as a fallback. Choose any remembered app-server connection
-from the selector on the **Projects** page; remote connections prompt you to sign in. CLI
-app commands automatically follow the active app-server connection:
+Sign in to your Sovara server. The CLI opens your browser; after you sign in,
+type the code shown in the browser into the terminal. Then verify the
+connection:
 
 ```bash
+sovara login
 sovara status
 ```
 
-- If `sovara status` succeeds, the CLI is using the desktop's active app-server
-  connection and, when it is remote, its signed-in session.
-- To change environments, choose another app-server connection from the selector
-  on the **Projects** page. CLI app commands do not have separate app-server
-  configuration.
-- For a headless or CI agent host, configure the execution-server URL and agent
-  token through the [Python API
-  reference](/sdks/python/api-reference) or [TypeScript API
-  reference](/sdks/typescript/api-reference). Headless agent configuration is
-  for recording and runtime traffic; user-facing CLI app commands use the
-  desktop app-server connection.
+<Note>
+For an enterprise deployment, use `sovara login --url https://sovara.company.com`
+with your organization's Sovara URL. Without `--url`, login uses
+`https://app.sovara-labs.com`.
+</Note>
 
-## Sovara desktop app
-
-The desktop app gives you a local workspace for recording, inspecting, and
-improving agent runs. Choose the installer for your operating system.
-
-<div className="install-downloads">
-  <div className="install-downloads-header">
-    <span>Latest installers</span>
-  </div>
-
-  <div className="install-download-grid">
-    <section className="install-download-card">
-      <div className="install-os-mark">
-        <img
-          className="install-os-logo install-os-logo-light"
-          src="/assets/icons/apple-logo-light.svg"
-          alt=""
-        />
-        <img
-          className="install-os-logo install-os-logo-dark"
-          src="/assets/icons/apple-logo-dark.svg"
-          alt=""
-        />
-      </div>
-      <div className="install-card-title">macOS</div>
-      <p>For Apple Silicon Macs.</p>
-      <a
-        className="install-download-link"
-        href="https://apps.sovara-labs.com/api/update/download?platform=darwin&arch=arm64"
-      >
-        Apple Silicon (.dmg)
-      </a>
-    </section>
-
-    <section className="install-download-card">
-      <div className="install-os-mark">
-        <img
-          className="install-os-logo install-os-logo-light"
-          src="/assets/icons/windows-logo-light.svg"
-          alt=""
-        />
-        <img
-          className="install-os-logo install-os-logo-dark"
-          src="/assets/icons/windows-logo-dark.svg"
-          alt=""
-        />
-      </div>
-      <div className="install-card-title">Windows</div>
-      <p>For Windows machines.</p>
-      <a
-        className="install-download-link"
-        href="https://apps.sovara-labs.com/api/update/download?platform=win32&arch=x64"
-      >
-        Windows (.exe)
-      </a>
-    </section>
-
-    <section className="install-download-card">
-      <div className="install-os-mark">
-        <img
-          className="install-os-logo install-os-logo-light"
-          src="/assets/icons/linux-logo-light.svg"
-          alt=""
-        />
-        <img
-          className="install-os-logo install-os-logo-dark"
-          src="/assets/icons/linux-logo-dark.svg"
-          alt=""
-        />
-      </div>
-      <div className="install-card-title">Linux</div>
-      <p>For Debian/Ubuntu and Fedora/Red Hat-based distributions.</p>
-      <a
-        className="install-download-link"
-        href="https://apps.sovara-labs.com/api/update/download?platform=linux&arch=x64&format=deb"
-      >
-        Debian / Ubuntu Intel/AMD (.deb)
-      </a>
-      <a
-        className="install-download-link"
-        href="https://apps.sovara-labs.com/api/update/download?platform=linux&arch=arm64&format=deb"
-      >
-        Debian / Ubuntu arm64 (.deb)
-      </a>
-      <a
-        className="install-download-link"
-        href="https://apps.sovara-labs.com/api/update/download?platform=linux&arch=x64&format=rpm"
-      >
-        Fedora / Red Hat Intel/AMD (.rpm)
-      </a>
-      <a
-        className="install-download-link"
-        href="https://apps.sovara-labs.com/api/update/download?platform=linux&arch=arm64&format=rpm"
-      >
-        Fedora / Red Hat arm64 (.rpm)
-      </a>
-    </section>
-  </div>
-</div>
-
-After the installer finishes, open Sovara, leave **Local** selected, and verify
-the connection:
-
-```bash
-sovara status
-```
-
-Keep the desktop app running while using the local workspace. Switching the
-desktop app-server connection changes the app server used by the UI and CLI app
-commands; it does not change an SDK's execution-server URL or agent token.
+For a headless agent host without a saved sign-in, set the SDK's
+Sovara server URL and API key instead; see the
+[Python](/sdks/python/api-reference) or
+[TypeScript](/sdks/typescript/api-reference) API reference.
 
 ## Python SDK
 
@@ -211,24 +100,38 @@ package manager that owns your project environment.
 
 ## TypeScript SDK
 
-Install `@sovara/runner` in the Node.js project where your agent runs.
+Install `@sovara/sdk` in the Node.js project where your agent runs.
 
 <Tabs>
   <Tab title="npm">
     ```bash
-    npm install @sovara/runner
+    npm install @sovara/sdk
     ```
   </Tab>
 
   <Tab title="pnpm">
     ```bash
-    pnpm add @sovara/runner
+    pnpm add @sovara/sdk
     ```
   </Tab>
 
   <Tab title="yarn">
     ```bash
-    yarn add @sovara/runner
+    yarn add @sovara/sdk
     ```
   </Tab>
 </Tabs>
+
+## API keys
+
+Create keys in **Settings → Project access → Project API Keys** or
+**Settings → Sovara API Keys**. Keys cover their project or organization;
+admins manage them, and members can view their metadata.
+
+Choose recording permissions and an optional expiry. Organization keys allow
+project creation and rename by default; deletion is opt-in. Create the project
+before recording.
+
+Save the secret when it is shown. Set `SOVARA_API_KEY` or pass `api_key` (Python) /
+`apiKey` (TypeScript) to `SovaraClient`, along with the project name. To replace a
+key, create a new one, update your clients, then revoke the old key.
