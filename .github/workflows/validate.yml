@@ -1,0 +1,39 @@
+name: Validate plugin
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      - name: Validate packaged manifests and required assets
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from urllib.parse import urlparse
+
+          root = Path('sovara')
+          manifests = [json.loads((root / name).read_text()) for name in
+                       ['plugin.json', '.claude-plugin/plugin.json', '.codex-plugin/plugin.json']]
+          assert len({(item['name'], item['version']) for item in manifests}) == 1
+          for manifest in manifests:
+              if 'mcpServers' in manifest:
+                  assert (root / manifest['mcpServers']).is_file()
+          for name in ['.mcp.json', 'mcp.json']:
+              config = json.loads((root / name).read_text())
+              for server in config['mcpServers'].values():
+                  assert urlparse(server['url']).scheme == 'https'
+          for name in ['LICENSE', 'README.md', 'assets/icon.png', 'skills/sovara/SKILL.md']:
+              assert (root / name).is_file()
+          for path in root.rglob('*.json'):
+              json.loads(path.read_text())
+          print('Plugin manifests, remote endpoints, JSON assets and skill package are valid.')
+          PY
