@@ -20,7 +20,7 @@ sovara org models discover --local-provider ollama --base-url http://localhost:1
 saved readiness—not live health. Secrets are never returned. `catalog` lists
 models, provider requirements, and presets.
 
-Discovery runs from the **Sovara server**: `localhost` on a remote deployment
+Discovery traces from the **Sovara server**: `localhost` on a remote deployment
 means the remote server. Use manual model names when discovery is unsupported.
 
 ## Configure
@@ -56,6 +56,29 @@ incur provider charges. If verification fails, nothing is saved.
 - Deleting credentials marks dependent tiers unverified. Shared keys also serve [recorded-step reruns](/cli/replay-keys).
 
 Keep credential files outside version control.
+
+### LiteLLM
+
+Prefix a model name configured in your LiteLLM proxy with `litellm/` and set
+`base_url` to the proxy:
+
+```json
+{
+  "tiers": {
+    "primary": {
+      "connection_type": "third_party_api",
+      "model_name": "litellm/openai/gpt-5.6-sol",
+      "base_url": "https://litellm.example.com"
+    }
+  },
+  "provider_api_keys": {"litellm": "YOUR_LITELLM_KEY"}
+}
+```
+
+The **Sovara server** must be able to reach the proxy. Steps recorded under
+`base_url` can be [rerun](/cli/replay-keys) with the same key. Use the URL without
+`/v1` if your agents call both `/v1/...` and unprefixed paths. LiteLLM can serve
+every tier except `decision`.
 
 ## Verify and reindex
 

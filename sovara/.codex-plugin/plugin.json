@@ -1,6 +1,6 @@
 {
   "name": "sovara",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Domain knowledge management and agent observability",
   "author": {
     "name": "Sovara Labs Inc.",
@@ -11,7 +11,7 @@
   "interface": {
     "displayName": "Sovara",
     "shortDescription": "Domain knowledge for AI agents",
-    "longDescription": "Apply your company’s tacit knowledge to everyday tasks, inspect recorded agent runs, and propose lesson improvements for review.",
+    "longDescription": "Apply your company’s tacit knowledge to everyday tasks, inspect recorded agent traces, and propose lesson improvements for review.",
     "developerName": "Sovara Labs Inc.",
     "category": "Productivity",
     "capabilities": [

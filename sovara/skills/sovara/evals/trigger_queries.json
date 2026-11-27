@@ -12,13 +12,13 @@
       "id": "trig-02",
       "query": "I want to see every prompt and response my agent script produced during a run",
       "should_trigger": true,
-      "rationale": "Run-recording intent without naming Sovara."
+      "rationale": "Trace-recording intent without naming Sovara."
     },
     {
       "id": "trig-03",
       "query": "the agent regressed after my last commit — diff its behavior between then and now",
       "should_trigger": true,
-      "rationale": "Run-comparison intent without naming Sovara."
+      "rationale": "Trace-comparison intent without naming Sovara."
     },
     {
       "id": "trig-04",
@@ -36,7 +36,7 @@
       "id": "trig-06",
       "query": "this OpenAI agent is looping — figure out which step starts the loop",
       "should_trigger": true,
-      "rationale": "Run-inspection intent for an LLM agent without naming Sovara."
+      "rationale": "Trace-inspection intent for an LLM agent without naming Sovara."
     },
     {
       "id": "trig-07",
@@ -120,7 +120,7 @@
       "id": "trig-20",
       "query": "set up a CI pipeline that fails when my agent's outputs regress against baseline traces",
       "should_trigger": true,
-      "rationale": "Run-comparison + regression detection — core Sovara use case framed as CI."
+      "rationale": "Trace-comparison + regression detection — core Sovara use case framed as CI."
     },
     {
       "id": "trig-21",

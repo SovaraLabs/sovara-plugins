@@ -8,7 +8,7 @@ Every command and subcommand accepts `-h` and `--help` for its exact usage and f
 
 - [Project Scope](#project-scope)
 - [Setup and Status](#setup-and-status)
-- [Runs and Inspection](#runs-and-inspection)
+- [Traces and Inspection](#traces-and-inspection)
 - [Step Rerun](#step-rerun)
 - [Replay Keys](#replay-keys)
 - [Annotations](#annotations)
@@ -24,7 +24,7 @@ working directory. Use the bundled
 [TypeScript usage guide](docs/sdks/typescript/use-the-sdk.md) for the current
 client contract.
 
-Use `sovara projects` to list projects. `sovara tags list`, `sovara runs`, and every
+Use `sovara projects` to list projects. `sovara tags list`, `sovara traces`, and every
 `sovara lessons` and `sovara issues` subcommand require `--project-id`.
 
 Project ID flags accept a full ID, any unambiguous ID prefix, or an exact project name.
@@ -32,7 +32,7 @@ Project ID flags accept a full ID, any unambiguous ID prefix, or an exact projec
 ```bash
 sovara projects
 sovara tags list --project-id "support-agent"
-sovara runs --project-id a6cbns64
+sovara traces --project-id a6cbns64
 sovara lessons retrieve --project-id "support-agent" "Customer asks for a refund exception"
 sovara lessons ls --project-id a6cbns64
 ```
@@ -60,15 +60,22 @@ usage: sovara install-skill [--level global|project]
                             [--target codex|claude|both]
 ```
 
-Check app-server reachability and the active user with:
+Check the Sovara connection and active user with:
 
 ```text
 usage: sovara status
 ```
 
-App commands use the active **Local** or remembered remote connection selected
-in the Sovara desktop app. For a remote connection, they also use its signed-in
-desktop session. They do not have separate endpoint configuration.
+Sign in to Sovara through the browser, or sign out, with:
+
+```text
+usage: sovara login [--url URL]
+usage: sovara logout
+```
+
+`sovara login` opens the browser and asks for the code shown after sign-in.
+It defaults to `https://app.sovara-labs.com`; use `--url <url>` for an enterprise
+deployment. CLI commands and SDKs then use that Sovara connection.
 
 List, resolve, or create projects with:
 
@@ -77,26 +84,14 @@ usage: sovara projects [project-id-prefix-or-name]
 usage: sovara projects create --name NAME [--description TEXT]
 ```
 
-Manage the bundled local exec server with:
+## Traces and Inspection
+
+### `sovara traces`
 
 ```text
-usage: sovara exec-server start [--server-url URL]
-usage: sovara exec-server stop [--server-url URL]
-```
-
-Without an explicit URL, `start` launches the bundled exec server when the
-configured local endpoint is not healthy. With `--server-url`, it only
-health-checks that endpoint. `stop` accepts only a local URL, stops the server
-and its Qdrant sidecar, and succeeds when they are already stopped.
-
-## Runs and Inspection
-
-### `sovara runs`
-
-```text
-usage: sovara runs --project-id PROJECT_ID
+usage: sovara traces --project-id PROJECT_ID
                    [--limit N] [--offset N] [--sort KEY] [--dir asc|desc]
-                   [--name TEXT] [--run-id ID_OR_PREFIX | --run-key KEY]
+                   [--name TEXT] [--trace-id FRAGMENT]
                    [--label up,down,none] [--tag-id IDS]
                    [--code-version SHAS] [--metric-filters JSON]
                    [--time-from ISO] [--time-to ISO]
@@ -109,20 +104,20 @@ includes `distinct_code_versions` and `custom_metric_columns`. Use
 comma-separated tag IDs are ANDed. `--metric-filters` accepts the same JSON as
 the API, for example `{"quality":{"kind":"number","min":0.8}}`.
 
-All commands that target one run accept exactly one of these selector forms:
+All commands that target one trace take one trace argument:
 
 ```text
-<run-id-or-prefix>
---project-id PROJECT_SELECTOR --run-key KEY
+<trace-id>
+<trace-id> --project-id PROJECT_SELECTOR
 ```
 
-Run keys are exact and project-scoped. UUIDs and unambiguous UUID prefixes do
-not require a project selector.
+Use the trace ID shown in Sovara or a unique ID prefix. To use your own
+identifier from the SDK, include `--project-id`.
 
 ### `sovara probe`
 
 ```text
-usage: sovara probe (<run-id> | --project-id PROJECT --run-key KEY) [--step STEP] [--steps STEPS] [--preview]
+usage: sovara probe <trace-id> [--project-id PROJECT] [--step STEP] [--steps STEPS] [--preview]
                     [--scope SCOPE] [--range START:END]
                     [--include-step-uuids]
                     [--input] [--output] [--key-regex KEY_REGEX]
@@ -135,12 +130,15 @@ selectors cannot be combined with overview scoping or `--range`.
 Recommended sequence:
 
 ```bash
-sovara probe <run_id>
-sovara probe <run_id> --scope 6 --range :20
-sovara probe <run_id> --scope 6.3 --range :20
-sovara probe <run_id> --step 2 --preview
-sovara probe <run_id> --step 2 --input --key-regex "body.max_tokens$"
+sovara probe <trace_id>
+sovara probe <trace_id> --scope 6 --range :20
+sovara probe <trace_id> --scope 6.3 --range :20
+sovara probe <trace_id> --step 2 --preview
+sovara probe <trace_id> --step 2 --input --key-regex "body.max_tokens$"
 ```
+
+`--key-regex` filters flattened keys and uses RE2 syntax (no lookarounds or
+backreferences).
 
 `--preview` truncates large string fields in selected step snapshots.
 `--include-step-uuids` is for debugging internal durable IDs only.
@@ -151,23 +149,23 @@ the supplementary user message containing lessons applied to that step.
 
 Overview ranges are zero-based and end-exclusive. The default is `:20`, and one
 page may contain at most 100 steps. An overview returns immediate steps only;
-when a returned step is a subrun, use its dotted ref with `--scope` to inspect
-that subrun. This works at arbitrary depth (`6`, `6.3`, `6.3.2`).
+when a returned step is a subtrace, use its dotted ref with `--scope` to inspect
+that subtrace. This works at arbitrary depth (`6`, `6.3`, `6.3.2`).
 
 ### `sovara step-overview`
 
 ```text
-usage: sovara step-overview (<run-id> | --project-id PROJECT --run-key KEY) --step <step-ref>
+usage: sovara step-overview <trace-id> [--project-id PROJECT] --step <step-ref>
 ```
 
 Uses Sovara's Fast Helper Model for compact semantic summaries of LLM steps and
-may consume model quota. Use `sovara probe <run_id> --step <step_ref> --preview`
+may consume model quota. Use `sovara probe <trace_id> --step <step_ref> --preview`
 for tool steps or when the model is not configured.
 
 ### `sovara logs`
 
 ```text
-usage: sovara logs (<run-id> | --project-id PROJECT --run-key KEY) [--tail TAIL] [--grep GREP]
+usage: sovara logs <trace-id> [--project-id PROJECT] [--tail TAIL] [--grep GREP]
                    [--context CONTEXT] [--line-numbers]
 ```
 
@@ -197,15 +195,15 @@ elevated privileges, and writes `system/system-log-collection.txt` with
 ### `sovara rerun`
 
 ```text
-usage: sovara rerun (<run-id> | --project-id PROJECT --run-key KEY) --step <step-ref> [--proposal ID | --disable-lesson-injection] [--set KEY=VALUE] [--set-file KEY=PATH] [--set-json KEY=JSON]
+usage: sovara rerun <trace-id> [--project-id PROJECT] --step <step-ref> [--proposal ID | --disable-lesson-injection] [--set KEY=VALUE] [--set-file KEY=PATH] [--set-json KEY=JSON]
 ```
 
 Use this only for recorded LLM call steps. Find the step ref with `probe`, then
 inspect input keys before editing:
 
 ```bash
-sovara probe <run_id_or_prefix>
-sovara probe <run_id_or_prefix> --step <step_ref> --input --key-regex "body"
+sovara probe <trace_id_or_prefix>
+sovara probe <trace_id_or_prefix> --step <step_ref> --input --key-regex "body"
 ```
 
 Edit options:
@@ -225,15 +223,15 @@ Edit options:
 Examples:
 
 ```bash
-sovara rerun <run_id_or_prefix> --step 3
-sovara rerun <run_id_or_prefix> --step 3 --proposal <proposal_id>
-sovara rerun <run_id_or_prefix> --step 3 --disable-lesson-injection
-sovara rerun <run_id_or_prefix> --step 3 --set body.messages.0.content="Use the policy excerpt only."
-sovara rerun <run_id_or_prefix> --step 3 --set-json body.max_tokens=512
-sovara rerun <run_id_or_prefix> --step 3 --set-file body.system.0.text=prompt_variant.txt
+sovara rerun <trace_id_or_prefix> --step 3
+sovara rerun <trace_id_or_prefix> --step 3 --proposal <proposal_id>
+sovara rerun <trace_id_or_prefix> --step 3 --disable-lesson-injection
+sovara rerun <trace_id_or_prefix> --step 3 --set body.messages.0.content="Use the policy excerpt only."
+sovara rerun <trace_id_or_prefix> --step 3 --set-json body.max_tokens=512
+sovara rerun <trace_id_or_prefix> --step 3 --set-file body.system.0.text=prompt_variant.txt
 ```
 
-The command returns JSON containing `status`, `run_id`, `step_ref`,
+The command returns JSON containing `status`, `trace_id`, `step_ref`,
 `overwritten_output`, and the replay's `lesson_retrieval` snapshot. Reruns
 perform current lesson retrieval by default; use the snapshot rather than the
 replayed prompt to verify what happened.
@@ -270,36 +268,36 @@ stdin so keys do not land in shell history.
 ## Annotations
 
 ```bash
-sovara runs --annotation needed --project-id PROJECT_SELECTOR --limit 5
-sovara runs --annotation needed --project-id PROJECT_SELECTOR --sort failureScore --dir desc --failure-min 0.5
-sovara runs --annotation annotated --project-id PROJECT_SELECTOR --limit 5
-sovara runs --annotation annotated --project-id PROJECT_SELECTOR --run-key KEY
+sovara traces --annotation needed --project-id PROJECT_SELECTOR --limit 5
+sovara traces --annotation needed --project-id PROJECT_SELECTOR --sort failureScore --dir desc --failure-min 0.5
+sovara traces --annotation annotated --project-id PROJECT_SELECTOR --limit 5
+sovara traces --annotation annotated --project-id PROJECT_SELECTOR --trace-id FRAGMENT
 sovara tags list --project-id PROJECT_SELECTOR
-sovara runs inspect <run_id_or_prefix>
-sovara runs annotate <run_id_or_prefix> --label success
-sovara runs annotate <run_id_or_prefix> --label failure --groundtruth "<expected outcome>" --steps 6.3.1,6.3.2
+sovara traces inspect <trace_id_or_prefix>
+sovara traces annotate <trace_id_or_prefix> --label success
+sovara traces annotate <trace_id_or_prefix> --label failure --groundtruth "<expected outcome>" --steps 6.3.1,6.3.2
 ```
 
 Queue responses preserve failure/novelty scores, tags, analysis statuses, and
-`distinct_code_versions`. Filters cover paging, name/run ID, text query, time,
+`distinct_code_versions`. Filters cover paging, name/trace ID, text query, time,
 runtime, code version, failure/novelty score, analysis state, and tag IDs.
 Annotated lists additionally accept `--label up,down`. Failure
 annotations require `--groundtruth`; pass `--steps` to persist focused evidence
 by step ref.
 
-`runs inspect` returns the complete run-annotation response. Read the
+`traces inspect` returns the complete trace-annotation response. Read the
 `recommendation` field for the `AnnotationRecommendation` object, or `null` when
 no recommendation exists. Read its `analysis` for the deep-analysis verdict,
 `evidence.adjudication_pairs` for completed artifact checks,
 `evidence.top_failure_evidence` for closest retained failure matches, and
 `evidence.most_novel_evidence` for novel chunks. Each chunk locator includes
-`run_id`, `step_uuid`, display `step_ref`, `field`, and zero-based `chunk_index`.
+`trace_id`, `step_uuid`, display `step_ref`, `field`, and zero-based `chunk_index`.
 `failure_embedding_artifact` is `true` for an artifact, `false` for a completed
 verdict that retained the pair as plausible failure evidence, and `null` when
 the pair was not checked.
 
-Completed runs participate automatically. Use `sovara runs analyze RUN` for
-explicit deep analysis and `sovara runs unannotate RUN` to clear a saved label
+Completed traces participate automatically. Use `sovara traces analyze TRACE` for
+explicit deep analysis and `sovara traces unannotate TRACE` to clear a saved label
 and ground truth.
 
 ## Project Issues
@@ -317,7 +315,7 @@ sovara issues list --project-id PROJECT_SELECTOR [--status open|closed]
                    [--limit N] [--offset N]
 sovara issues get 42 --project-id PROJECT_SELECTOR
 sovara issues create --project-id PROJECT_SELECTOR --title "Retry behavior is unclear" [--body "See #17."]
-sovara issues comment 42 --project-id PROJECT_SELECTOR --body "Reproduced in the latest run."
+sovara issues comment 42 --project-id PROJECT_SELECTOR --body "Reproduced in the latest trace."
 sovara issues close 42 --project-id PROJECT_SELECTOR
 ```
 
@@ -330,6 +328,8 @@ Issues and lessons share project reference numbers. `issues get` and
 Issue bodies and comments may mention lessons using `#N`.
 
 ## Lessons
+
+See the [lesson workflow](docs/cli/lessons.md) for creation, review, and publication examples.
 
 ```text
 usage: sovara lessons {ls,get,create,update,retrieve,mkdir,mv,cp,rm,proposals,history} ...
@@ -382,7 +382,7 @@ Apply have an eleven minute client timeout; the review job is bounded at ten min
 Text inputs accept `--content` or `--content-file FILE`; `-` reads stdin. Comment
 bodies and conflict JSON support the same file/stdin convention. Creation requires
 nonempty title, content, and when-to-use. Updates preserve omitted fields, including
-source `run_id`/`step_uuid`; use `--run-id` or `--run-key` plus `--step` to attach
+source `trace_id`/`step_uuid`; use `--trace-id` plus `--step` to attach
 provenance. Optional metadata includes `--summary`, `--path`, repeated `--alias`
 and `--keyword`. All commands return JSON suitable for agents.
 
@@ -434,14 +434,10 @@ Grant the assistant write access to `~/.sovara` or rerun
 `sovara install-skill` so it can configure that access. Sovara credentials and
 local state live there.
 
-### App server not reachable
+### Cannot connect to Sovara
 
-Open the Sovara desktop app and verify its active app-server connection in the
-selector on the **Projects** page. With **Local** selected, keep the app open so
-the bundled backend is available. For a remembered remote connection, verify
-its origin under **Settings > App-server connection settings** and sign in through the
-app. CLI app commands automatically use the selected desktop app-server
-connection and, when it is remote, its session.
+Run `sovara status` to check your connection. Sign in with `sovara login`;
+for an enterprise deployment, add `--url <your Sovara URL>`.
 
 ### Rerun reports a missing replay key
 
@@ -449,19 +445,12 @@ Set the provider key shown in the error with `sovara replay-keys set <provider>
 --project-id PROJECT --api-key-env <ENV_VAR>` or `--api-key-stdin`, then retry
 `sovara rerun`.
 
-### Exec server not reachable
+### SDK cannot reach Sovara
 
-`sovara exec-server start` follows the selected desktop connection: it checks
-the shared URL for remote connections or starts the local exec server when needed.
-`--server-url` and `SOVARA_EXEC_SERVER_URL` remain explicit overrides. Remote
-checks use `/runner/health`, falling back to `/health` only on 404 for older
-servers. SDKs also ask the installed CLI to start the local server when needed.
+Sign in with `sovara login` (or `sovara login --url <url>` for an enterprise
+host), or configure `SOVARA_SERVER_URL` and `SOVARA_API_KEY` for a headless agent.
 
-`sovara exec-server stop` is idempotent. If it fails, the failure is not merely
-that the server was already stopped; check port `5960` and
-`~/.sovara/logs/exec_server.log` for the remaining process or backend error.
-
-Recommended persistent locations:
+Recommended persistent locations for `SOVARA_SERVER_URL`:
 
 | OS | Location |
 | --- | --- |
@@ -477,21 +466,21 @@ immutable. Use the bundled [Python usage guide](docs/sdks/python/use-the-sdk.md)
 or [TypeScript usage guide](docs/sdks/typescript/use-the-sdk.md) for exact
 configuration.
 
-## Run tags
+## Trace tags
 
-Every tag command requires `--project-id`. Create tags, assign them to a run, or
+Every tag command requires `--project-id`. Create tags, assign them to a trace, or
 remove them:
 
 ```bash
 sovara tags create --project-id Payments --name "Needs review" --color '#0969da'
 sovara tags list --project-id Payments
-sovara tags set <run-id-or-prefix> --project-id Payments --tag-ids <tag-id>,<other-tag-id>
-sovara tags set <run-id-or-prefix> --project-id Payments --tag-ids ''
+sovara tags set <trace-id> --project-id Payments --tag-ids <tag-id>,<other-tag-id>
+sovara tags set <trace-id> --project-id Payments --tag-ids ''
 sovara tags delete <tag-id> --project-id Payments
 ```
 
 `set` replaces the complete tag list. Include every tag you want to keep; an empty
-`--tag-ids` clears it. Deleting a tag removes all its run assignments. The default
+`--tag-ids` clears it. Deleting a tag removes all its trace assignments. The default
 creation color is blue; see the MCP tool reference
 for the supported palette.
 
@@ -500,7 +489,7 @@ for the supported palette.
 Every automation command requires `--project-id`. Commands return JSON.
 
 ```bash
-sovara automations create --project-id Payments --name "Daily failure review" --prompt "Summarize new failed runs" --cron '0 9 * * 1-5' --timezone Europe/Zurich --enabled=false
+sovara automations create --project-id Payments --name "Daily failure review" --prompt "Summarize new failed traces" --rrule 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR;BYHOUR=9;BYMINUTE=0' --timezone Europe/Zurich --enabled=false
 sovara automations list --project-id Payments --enabled=false --limit 20
 sovara automations get <automation-id> --project-id Payments
 sovara automations update <automation-id> --project-id Payments --prompt "Summarize recurring failures"
@@ -514,11 +503,24 @@ sovara automations reasoning-options --project-id Payments
 sovara automations delete <automation-id> --project-id Payments
 ```
 
-Schedules use five-field cron expressions and IANA timezones. Creation enables the
+Schedules use iCalendar recurrence rules (`--rrule`) and IANA timezones. Rules repeat
+`HOURLY`, `DAILY`, `WEEKLY` or `MONTHLY`, with an optional `INTERVAL` of up to 23 hours,
+365 days, 52 weeks or 12 months. It counts from the first run; hours count from midnight of
+the day the schedule is set:
+
+| Schedule | Rule |
+| --- | --- |
+| Every 6 hours | `FREQ=HOURLY;INTERVAL=6;BYMINUTE=0` |
+| Every second day at 3am | `FREQ=DAILY;INTERVAL=2;BYHOUR=3;BYMINUTE=0` |
+| Weekdays at 9am and 5pm | `FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR;BYHOUR=9,17;BYMINUTE=0` |
+| Last day of the month at 6pm | `FREQ=MONTHLY;BYMONTHDAY=-1;BYHOUR=18;BYMINUTE=0` |
+| First Monday of the month at 9am | `FREQ=MONTHLY;BYDAY=1MO;BYHOUR=9;BYMINUTE=0` |
+
+Creation enables the
 schedule unless `--enabled=false` is supplied. Use `--thinking-level` to select a
 supported reasoning level (default `medium`). Every execution starts a fresh
 conversation and reuses that automation’s files. The deprecated
-`--remember-previous-runs` flag is accepted but ignored.
+`--remember-previous-traces` flag is accepted but ignored.
 
 Updates change only explicitly supplied options. Mutations fetch the current
 revision before applying the change; provide `--expected-revision N` to require a

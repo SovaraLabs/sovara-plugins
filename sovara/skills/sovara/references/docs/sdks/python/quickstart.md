@@ -1,48 +1,54 @@
 ---
 title: "Python SDK quickstart"
-description: "Set up the Sovara Python SDK and record a project-bound agent run."
+description: "Set up the Sovara Python SDK and record a project-bound agent trace."
 ---
 
 <script src="/assets/sdk-nav.js"></script>
 
 Sovara records supported LLM, MCP, and explicitly traced tool calls inside an
-SDK run. Every Python integration starts with one project-bound
+SDK trace. Every Python integration starts with one project-bound
 `SovaraClient`.
 
 ## Install
 
-Follow [Installation](/get-started/installation) to use an existing Sovara
-environment or choose a local, remote, or headless setup. Then add the packages
-used by this example:
+Use Python 3.10+, [install the CLI](/cli/install), then sign in with
+`sovara login`. For a headless host, see the
+[API reference](/sdks/python/api-reference).
+
+Install the example's dependencies:
 
 ```bash
-uv add sovara openai-agents
+uv add sovara sovara-openai-agents
 ```
 
-Set `OPENAI_API_KEY` in the environment before running the example.
+Set `OPENAI_API_KEY` in the environment before running the example. The model
+calls use your provider account and incur its normal API charges.
 
 ## A complete example
 
-This example uses two child agents to compare the weather in Zurich and
-Boston. Their model and framework tool calls are recorded automatically;
-`trace` records the custom comparison step.
+Two child agents compare sample temperatures. Sovara records their model and
+tool calls; `trace` adds the comparison step. The weather values are demo data.
 
 ```python
+import sovara_openai_agents  # [!code ++]
+from sovara import SovaraClient, auto_instrument, trace  # [!code ++]
 from agents import Agent, Runner, function_tool
-from sovara import SovaraClient, trace  # [!code ++]
 
+# Record model calls and agent tools; call before creating provider clients.  # [!code ++]
+auto_instrument()  # [!code ++]
+sovara_openai_agents.instrument()  # [!code ++]
 sovara_client = SovaraClient(project_name="weather-agent")  # [!code ++]
 
 
 @function_tool
 def get_zurich_temperature() -> int:
-    """Get the current temperature in Zurich in Celsius."""
+    """Return the demo temperature in Zurich in Celsius."""
     return 22
 
 
 @function_tool
 def get_boston_temperature() -> int:
-    """Get the current temperature in Boston in Celsius."""
+    """Return the demo temperature in Boston in Celsius."""
     return 27
 
 
@@ -73,20 +79,22 @@ def choose_warmer_city(zurich: int, boston: int) -> str:
 
 def main() -> None:
     question = "Which city is warmer, Boston or Zurich?"
-    with sovara_client.run("compare city weather") as run_id:  # [!code ++]
-        # Attach the user-visible request to the top-level run.  # [!code ++]
-        sovara_client.log(run_id=run_id, run_input=question)  # [!code ++]
+    with sovara_client.trace("compare city weather") as trace_id:  # [!code ++]
+        # Attach the user-visible request to the top-level trace.  # [!code ++]
+        if trace_id is not None:  # [!code ++]
+            sovara_client.log(trace_id=trace_id, trace_input=question)  # [!code ++]
 
-        # Each subrun groups one delegated agent's work into an expandable child run.  # [!code ++]
-        with sovara_client.subrun("Zurich weather agent"):  # [!code ++]
+        # Each subtrace groups one delegated agent's work into an expandable child trace.  # [!code ++]
+        with sovara_client.subtrace("Zurich weather agent"):  # [!code ++]
             zurich = Runner.run_sync(zurich_agent, question).final_output
 
-        with sovara_client.subrun("Boston weather agent"):  # [!code ++]
+        with sovara_client.subtrace("Boston weather agent"):  # [!code ++]
             boston = Runner.run_sync(boston_agent, question).final_output
 
         answer = choose_warmer_city(zurich, boston)
-        # Attach the final user-visible result to the top-level run.  # [!code ++]
-        sovara_client.log(run_id=run_id, run_output=answer)  # [!code ++]
+        # Attach the final user-visible result to the top-level trace.  # [!code ++]
+        if trace_id is not None:  # [!code ++]
+            sovara_client.log(trace_id=trace_id, trace_output=answer)  # [!code ++]
 
     print(answer)
 
@@ -96,17 +104,11 @@ if __name__ == "__main__":
 ```
 
 <Note>
-  Sovara records supported framework tools such as `@function_tool` and MCP
-  calls automatically. Do not add `@trace` to those tools as well; reserve it
-  for important operations that are not already captured.
+Use `trace` for custom operations; supported framework tools and MCP calls are
+recorded automatically. Use optional subtraces to group child agents.
 </Note>
 
-<Note>
-  Subruns are optional, but provide a useful abstraction for grouping child
-  agents or delegated phases into expandable units.
-</Note>
-
-## Verify one run
+## Verify one trace
 
 Save the example as `weather_agent.py`, then run it normally:
 
@@ -114,49 +116,13 @@ Save the example as `weather_agent.py`, then run it normally:
 uv run python weather_agent.py
 ```
 
-Open the `weather-agent` project in Sovara to inspect the run. A run typically
-corresponds to one chat session or one workflow execution.
-
-`log(run_id=..., run_input=..., run_output=...)` populates the Input and Output columns in the
-Runs table, so you can scan results without opening each run:
-
-<img
-  className="docs-screenshot"
-  src="/assets/screenshots/python-sdk-quickstart-runs.png"
-  alt="Sovara Runs table showing the logged weather comparison input and output"
-/>
-
-Open the run to see both weather-agent subruns, their LLM and tool calls, and
-the final `Choose Warmer City` step:
-
-<img
-  className="docs-screenshot"
-  src="/assets/screenshots/python-sdk-quickstart-trace.png"
-  alt="Sovara trace showing Zurich and Boston weather-agent subruns and the final city comparison"
-/>
+Open the `weather-agent` project and select
+<strong><Icon icon="play" size={14} /> Traces</strong> to inspect the recording.
+Open the trace to see both subtraces, their model and tool calls, and the comparison
+step. Logged input and output also appear in the Traces table.
 
 ## Next steps
 
-- [Use the SDK](/sdks/python/use-the-sdk) for subruns, durable runs and run IDs, lessons, and metadata.
+- [Use the SDK](/sdks/python/use-the-sdk) for subtraces, durable traces and trace IDs, lessons, and metadata.
 - [API reference](/sdks/python/api-reference) for the exact public surface.
-- [Troubleshooting](/sdks/python/troubleshooting) for missing runs or steps.
-
-## Explicit conversation turns
-
-`run()` opens a recording session; it does not create an implicit turn. Declare
-interactions with scoped `turn()` blocks. Setup, cleanup, and other work outside
-those blocks are still captured, with no turn membership.
-
-```python
-with sovara_client.run("conversation", run_id="chat-123"):
-    setup()
-    with sovara_client.turn(turn_input="Hi."):
-        respond()
-    with sovara_client.turn(turn_input="Another question."):
-        respond()
-    cleanup()
-```
-
-The CLI and SDKs require `runner-api` 4. Upgrade the CLI, SDKs, app-server and exec-server together.
-See [Using the SDK](/sdks/python/use-the-sdk#explicit-conversation-turns)
-for separate recordings with the same `run_id`, empty turns, subruns, and concurrent work.
+- [Troubleshooting](/sdks/python/troubleshooting) for missing traces or steps.

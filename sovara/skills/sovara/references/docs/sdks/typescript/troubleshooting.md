@@ -1,6 +1,6 @@
 ---
 title: "Troubleshooting"
-description: "Diagnose missing TypeScript runs, steps, project assignment, and noisy logs."
+description: "Diagnose missing TypeScript traces, steps, project assignment, and noisy logs."
 ---
 
 <script src="/assets/sdk-nav.js"></script>
@@ -9,49 +9,33 @@ description: "Diagnose missing TypeScript runs, steps, project assignment, and n
 
 | Symptom | Check |
 | --- | --- |
-| No run appears | Confirm the entrypoint reaches and awaits `sovara_client.run(...)`. Check the terminal for a Sovara warning. |
-| Run appears in the wrong project | Check the `projectName` passed to `new SovaraClient(...)`. |
-| An LLM or supported framework tool call is missing | Confirm the call executes and completes before the `run(...)` callback returns. |
+| No trace appears | Confirm the entrypoint reaches and awaits `sovara_client.trace(...)`. Check the terminal for a Sovara warning. |
+| A trace appears without model or tool steps | Await `autoInstrument()` once at startup, before creating provider clients or agents. |
+| `CompatibilityError` | The Sovara server is older than the SDK. Update the Sovara server. |
+| An evaluation sample is missing from Traces | Look in <strong><Icon icon="chart-no-axes-column" size={14} /> Evaluations</strong>; the main Traces view excludes evaluation-owned samples. |
+| Lessons are missing | Check that the key allows lessons, the proposal was applied, automatic injection is enabled, required models are configured, and the lesson scope includes the right folders. |
+| Trace appears in the wrong project | Check the `projectName` passed to `new SovaraClient(...)`. |
+| An LLM or supported framework tool call is missing | Confirm the call executes and completes before the `trace(...)` callback returns. |
 | A custom operation is missing | Wrap its shared execution boundary with `trace`. |
-| Claude Agent SDK calls are missing | Import `query` or `startup` from `@sovara/runner/claude`. |
-| Logs mix between concurrent runs | Set `captureLogs: false` on concurrent top-level runs. |
+| Logs mix between concurrent traces | Set `captureLogs: false` on concurrent top-level traces. |
 
-## The run stops with an incompatible server
+## Recording is unavailable
 
-The runner and the Sovara server it reached implement different versions of the
-`runner-api` contract, so the run stops instead of recording against a server
-that cannot serve it:
+[Install the CLI](/cli/install) and sign in with `sovara login`; the
+SDK records to that server. On a headless host, set `url` and `apiKey` (or
+`SOVARA_API_KEY`); see the
+[API reference](/sdks/typescript/api-reference).
 
-```
-Your server is outdated. Please update.
-```
+An unreachable server may let your agent continue without recording.
+`getTraceId()` returns `undefined` in that case; skip `log()` for that trace.
 
-Update the component named in the message, or point `SOVARA_EXEC_SERVER_URL`
-at an up-to-date server. Compatibility checks stop unsupported requests before
-recording starts.
+Explicit calls such as `log()` reject with `RecordingError` when the server fails.
+Catch it where the agent must keep running. See [Errors](/sdks/typescript/api-reference#errors).
 
-## Keep recorded work inside the run
+## Missing custom steps
 
-The run callback must contain and await the real agent task:
-
-```ts
-const sovara_client = new SovaraClient({ projectName: "support-agent" });
-
-const answer = await sovara_client.run("answer question", async () => {
-  return await runAgent(question);
-});
-```
-
-Promises started without `await` may continue after the run has closed, so
-their LLM and tool calls will not belong to that run. Use
-`sovara_client.subrun(...)` when delegated work should appear as a child run.
-
-## Trace custom operations
-
-Supported provider, framework tool, and MCP calls are recorded automatically.
-Use `trace` for important application operations that do not pass through one
-of those integrations, such as retrieval, database access, parsing, or custom
-tool dispatch:
+Await `autoInstrument()` before creating clients or agents or capturing a reference to
+`fetch`. Add `trace` only to operations that are not already recorded:
 
 ```ts
 const retrieveContext = trace(async function retrieveContext(question: string) {
@@ -59,31 +43,19 @@ const retrieveContext = trace(async function retrieveContext(question: string) {
 });
 ```
 
-Prefer one shared dispatch wrapper over many helper wrappers.
-
 ## Inspect what was recorded
 
 ```bash
-sovara probe <run-id>
-sovara probe <run-id> --step <step-ref> --preview
-sovara logs <run-id> --tail 40
+sovara probe <trace-id>
+sovara probe <trace-id> --step <step-ref> --preview
+sovara logs <trace-id> --tail 40
 ```
 
-Use visible step refs from `probe`, not internal UUIDs.
+Use step references shown by `probe`.
 
-## Turns and recording compatibility
+## Traces and turns
 
-Current Python and TypeScript SDKs require `runner-api` 4. A server without
-version 4 or missing metadata causes a compatibility error before the agent callback;
-upgrade both app-server and exec-server together. Server unavailability keeps
-the existing no-capture mode.
-
-A run with no explicit `turn()` sections has no turns. Calls outside sections
-are recorded without turn membership. If a late response appears in an earlier
-turn, it retains the scope in which the operation began; a subsequent section
-does not change its identity. Await tasks and consume streams before closing the
-outer recording. A long-lived Claude Agent SDK connection keeps the context
-captured when it connects; open it in the interaction whose work it represents.
-
-Turn input is separate from the latest run input/output. Empty turns are kept.
-Same-run nested sections and operations through a different client are rejected.
+Keep agent work inside `trace()` and await tasks and streams before the callback
+returns. Declare conversation turns with `turn()`; they are not created automatically.
+Do not nest turns in the same trace or use a different client inside it.
+See [the usage guide](/sdks/typescript/use-the-sdk#explicit-conversation-turns).

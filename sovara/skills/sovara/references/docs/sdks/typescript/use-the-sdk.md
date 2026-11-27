@@ -1,48 +1,67 @@
 ---
 title: "Use the SDK"
-description: "Understand TypeScript project identity, runs, steps, subruns, metadata, and lessons."
+description: "Understand TypeScript project identity, traces, steps, subtraces, metadata, and lessons."
 ---
 
 <script src="/assets/sdk-nav.js"></script>
 
-## Project-owned top-level runs
+## Turn on automatic recording
 
-Create one `SovaraClient` for a stable project name. Use one top-level run for
-one user request, conversation turn, eval sample, batch job, or other execution
-you want to inspect.
+Await `autoInstrument()` once at startup, before creating provider clients or agents and
+before any code keeps its own reference to `fetch`:
 
 ```ts
-const sovara_client = new SovaraClient({ projectName: "support-agent" });
+import { autoInstrument } from "@sovara/sdk";
 
-await sovara_client.run("research-and-answer", () => runAgent());
+await autoInstrument();
 ```
 
-The client ensures the exec server is reachable, registers the run, executes
-the callback in an `AsyncLocalStorage` scope, and finalizes the run in
-`finally`.
+Inside a trace, it records:
 
-For a durable conversation or job, pass your own stable identifier as `runId`,
-or a `sovara-` id. Reuse either value to reach the same run and append to it.
+- model calls made through `fetch`, `node:http` and the AWS SDK's HTTP/2 handler
+- MCP client tool calls
+
+Top-level `await` needs an ES module (for example a `.mts` file). Otherwise, await it at
+the start of your entry function.
+
+## Project-owned top-level traces
+
+Create one `SovaraClient` for a stable project name. Use one top-level trace for
+a workflow, evaluation sample, batch job, or durable conversation. A recording
+session appends work to that trace; a [turn](#explicit-conversation-turns) groups
+one interaction within it.
 
 ```ts
-await sovara_client.run(
+import { SovaraClient, trace } from "@sovara/sdk";
+
+const sovara_client = new SovaraClient({ projectName: "support-agent" });
+
+await sovara_client.trace("research-and-answer", () => traceAgent());
+```
+
+For a durable conversation or job, pass your own stable identifier as `traceId`,
+or reuse the ID from `getTraceId()` in a previous SDK trace. Reuse either value to add steps
+to the same trace in that project.
+
+```ts
+await sovara_client.trace(
   "support chat",
   () => agent.reply(message),
-  { runId: chatId },
+  { traceId: chatId },
 );
 ```
 
-Keep prompts and secrets out of `runId`. `run()` returns the callback result. To
-read the canonical run ID, call `sovara_client.getRunId()` inside the callback
-while the run is active. Pass that ID to the CLI, here as `RUN_ID`:
+Keep prompts and secrets out of `traceId`. `trace()` returns the callback result. To
+read the trace ID, call `sovara_client.getTraceId()` inside the callback
+while the trace is active. Pass that ID to the CLI, here as `TRACE_ID`:
 
 ```bash
-sovara probe "$RUN_ID"
+sovara probe "$TRACE_ID"
 ```
 
 ## Steps and explicit tracing
 
-Supported provider, framework tool, and MCP calls inside a run become ordered
+Supported provider, framework tool, and MCP calls inside a trace become ordered
 steps. Wrap an important uncaptured application boundary with `trace`:
 
 ```ts
@@ -55,109 +74,221 @@ Prefer shared tool or dispatch chokepoints. A trace filled with miscellaneous
 helper calls is harder to understand than one that exposes agent decisions and
 actions.
 
-## Subruns
+## Subtraces
 
-Use `sovara_client.subrun(...)` for child agents, delegated branches, parallel
+Use `sovara_client.subtrace(...)` for child agents, delegated branches, parallel
 work, and coherent multi-step phases:
 
 ```ts
-await sovara_client.run("finance-eval", () =>
-  sovara_client.subrun("sample-42", () => runOneSample("sample-42")),
+await sovara_client.trace("finance-eval", () =>
+  sovara_client.subtrace("sample-42", () => traceOneSample("sample-42")),
 );
 ```
 
-Nested top-level runs are ignored with a warning. Use a subrun when child work
-should appear in the run tree.
+Use `subtrace()` for child work. Nesting `trace()` does not create a child trace.
 
-## Run metadata
+## Trace metadata
+
+Use `log()` with an explicit trace to attach input, output, and custom fields:
 
 ```ts
-await sovara_client.run("answer-question", async () => {
-  await sovara_client.logInput(question);
+await sovara_client.trace("answer-question", async () => {
+  const traceId = sovara_client.getTraceId();
   const answer = await agent(question);
-  await sovara_client.logOutput(answer);
-  await sovara_client.logMetrics({ answered: true, latencyBudgetMs: 2500 });
+  if (traceId) {
+    await sovara_client.log({
+      traceId,
+      traceInput: question,
+      traceOutput: answer,
+      fields: { answered: true, latency_budget_ms: 2500 },
+    });
+  }
 });
 ```
 
-Metrics accept booleans, integers, and finite numbers.
+Input and output must be strings; serialize structured values with `JSON.stringify()`.
+Custom `fields` accept booleans, strings, and finite numbers (integers within ±2**53).
+`getTraceId()` returns `undefined` when recording is unavailable; skip logging then.
+`log()` also works after the trace ends. See the
+[API reference](/sdks/typescript/api-reference) for validation rules.
+
+## Evaluation samples
+
+Create an evaluation, record each sample under it with `evalRunId`, then log verdicts and
+aggregate results:
+
+```ts
+const evalRunId = await sovara_client.createEvalRun();
+let traceId: string | undefined;
+const answer = await sovara_client.trace("sample-42", async () => {
+  traceId = sovara_client.getTraceId();
+  return agent(question);
+}, { evalRunId });
+if (traceId) {
+  await sovara_client.log({ traceId, evalRunId, traceOutput: answer, llmJudgeIsCorrect: true });
+}
+await sovara_client.log({ evalRunId, fields: { accuracy: 1.0 } });
+```
+
+See [Evaluations](/evals/evals-in-sovara) for metrics and verdicts.
 
 ## Lessons
 
-Automatic lesson injection is project-wide by default for supported model
-calls. Narrow retrieval with the run's `lessonScope` option:
+When automatic injection is enabled and the required models are configured,
+supported model calls retrieve from the project's production lessons.
+Unapplied proposals are not used. Narrow retrieval with the trace's `lessonScope` option:
 
 ```ts
-await sovara_client.run(
+await sovara_client.trace(
   "answer-question",
   () => callModel(question),
   { lessonScope: "support/refunds/" },
 );
 ```
 
-Temporarily replace the active scope with `sovara_client.lessonScope(...)`.
-Sovara retrieves lessons independently for each supported model call and adds a
-supplementary user message only to the copied request sent to the provider. It
-does not change the conversation objects owned by your app.
+Temporarily replace the active scope with `sovara_client.lessonScope(...)`
+inside the trace. Use `null` for all folders or `[]` for no lessons:
+
+```ts
+await sovara_client.trace("answer-question", async () => {
+  return await sovara_client.lessonScope("support/refunds/", () => callModel(question));
+});
+```
+
+See [runtime retrieval](/sovaradb/auto-injection) for project settings.
 
 ## Logs and concurrency
 
 Log capture is enabled by default. Pass `{ captureLogs: false }` as the third
-argument to `run()` for concurrent top-level runs to avoid mixing process output.
+argument to `trace()` for concurrent top-level traces to avoid mixing process output.
 
 ## Run the application
 
-Run the application normally. The SDK records the run:
+Run the application normally. The SDK records the trace:
 
 ```bash
 npm run start
 ```
 
-Open Sovara to inspect the recorded run.
+Open Sovara to inspect the recorded trace.
 
 Use the [API reference](/sdks/typescript/api-reference) for exact signatures.
 
 ## Explicit conversation turns
 
-`run()` opens a recording session without an implicit turn. `turn(options, fn)`
+`trace()` opens a recording session without an implicit turn. `turn(options, fn)`
 declares a scoped interaction and returns the callback result. Work outside turn
 callbacks is still captured, with no turn membership.
 
 ```ts
-await sovara_client.run("conversation", async () => {
+await sovara_client.trace("conversation", async () => {
   await setup();
   await sovara_client.turn({ turnInput: "Hi." }, async () => respond());
   await sovara_client.turn({ turnInput: "Another question." }, async () => respond());
   await cleanup();
-}, { runId: "chat-123" });
+}, { traceId: "chat-123" });
 ```
 
-For one recording per interaction, reuse the same `runId` and declare
+For one recording per interaction, reuse the same `traceId` and declare
 each interaction explicitly:
 
 ```ts
 for (const message of messages) {
-  await sovara_client.run("conversation", async () => {
+  await sovara_client.trace("conversation", async () => {
     return await sovara_client.turn({ turnInput: message }, () => respond());
-  }, { runId: "chat-123" });
+  }, { traceId: "chat-123" });
 }
 ```
 
-Each callback installs an immutable context and restores its parent on exit.
-There is no turn-close request or credential rotation. Empty callbacks remain
-visible as empty turns. `turnInput` accepts only a string or `undefined`; `null`
-and other types are rejected before requests. Empty strings, Unicode, spaces,
-and line breaks are preserved exactly. `logInput()` and `logOutput()` remain
-latest-value properties of the whole run, separate from the interaction input.
+`turnInput` is an optional string for the interaction; logged input and output
+describe the whole trace. Do not nest turns in the same trace. Await tasks and
+consume streams before the outer callback returns.
 
-Same-run nested turns and using a different client inside the run are rejected.
-A subrun's invocation belongs to the parent's turn; the child starts without a
-turn and may declare its own. Tasks inherit the originating `AsyncLocalStorage`
-scope, so a later turn never reassigns them. Await parallel tasks and fully
-consume streams before the outer `run()` callback returns. Concurrent turn
-sections are logical groups, not a total timeline.
+## Record calls Sovara does not capture
 
-The CLI and SDKs require `runner-api` 4. Upgrade the CLI, SDKs, app-server and exec-server together;
-servers without version 4 and servers without compatibility metadata are rejected before
-the agent code starts. An unreachable server keeps the no-capture fallback,
-including execution of turn callbacks.
+When a model, tool or MCP call isn't captured automatically, record it yourself.
+`startStep()` reserves a step before the call, `activate()` keeps automatic recording
+from recording the same call twice, and `finish()`, `fail()` or `cancel()` reports how it
+ended:
+
+```ts
+import { startStep, type JsonObject } from "@sovara/sdk";
+
+async function runTool(name: string, args: JsonObject) {
+  const step = await startStep({ kind: "tool", name, arguments: args });
+  let result;
+  try {
+    result = await step.activate(() => dispatch(name, args));
+  } catch (error) {
+    await step.fail(error);
+    throw error;
+  }
+  await step.finish(result);
+  return result;
+}
+```
+
+For an operation that already finished, `recordStep(call, outcome)` records it in one
+request. For a model call, pass `{ lessons: true }` to `startStep()` to receive matching
+lessons as `step.lessonContext`; insert them into the request and report what you sent
+with `execution`. See the [API reference](/sdks/typescript/api-reference#explicit-steps).
+
+Outside a trace these functions send nothing. Inside one they reject with
+`RecordingError` when the server fails.
+
+## Share a recording across processes
+
+Agent hooks often run as separate short-lived processes. One process opens a recording
+and stores the returned handle; later ones resume it to add turns and steps; the last one
+closes it.
+
+The handle is a string that your code must keep between processes; Sovara doesn't store it
+for you. In the example, `storePrivately` and `loadHandle` are your own helpers, not Sovara
+functions: they save the handle to a file only the current user can read, and read it back.
+
+```ts
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { homedir } from "node:os";
+import { dirname, join } from "node:path";
+import { closeRecording, exportRecording, openRecording, recordStep, resumeRecording, startTurn } from "@sovara/sdk";
+
+// Your own storage for the handle (not part of Sovara).
+const handleFile = join(homedir(), ".my-agent", "sovara-handle");
+
+// Save the handle where only this user can read it; it contains a write token.
+async function storePrivately(handle: string): Promise<void> {
+  await mkdir(dirname(handleFile), { recursive: true });
+  await writeFile(handleFile, handle, { mode: 0o600 });
+}
+
+// Read the handle a previous process saved.
+const loadHandle = () => readFile(handleFile, "utf8");
+
+// Session start
+await storePrivately(await openRecording({ projectName: "coding-agent", name: "session" }));
+
+// Each prompt, in another process
+await resumeRecording(await loadHandle(), async () => {
+  await startTurn(prompt);
+  await storePrivately(exportRecording()!); // The handle now carries the turn.
+});
+
+// Each tool call
+await resumeRecording(await loadHandle(), () =>
+  recordStep({ kind: "tool", name: tool, arguments: args }, { status: "success", output: result }),
+);
+
+// Session end
+await closeRecording(await loadHandle());
+await rm(handleFile);
+```
+
+- `openRecording({ parent: handle })` opens a child trace, for example for a subagent.
+- Inside a resumed recording, use `getTraceId()` with `sovara_client.log()`.
+- A handle contains a write token. Keep it private.
+- Handles work across the Python and TypeScript SDKs.
+
+## Framework integrations
+
+LangChain, LangGraph, the OpenAI Agents SDK, Claude Code and Pi have their own packages, such
+as `@sovara/langchain` and `@sovara/openai-agents`. See [Integrations](/integrations/overview).
